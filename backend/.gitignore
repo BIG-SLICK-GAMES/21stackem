@@ -1,0 +1,13 @@
+.env
+.env.*
+!.env.example
+!.env.local.example
+node_modules
+dist
+build
+logs
+*.log
+.DS_Store
+.vite
+.next
+coverage
