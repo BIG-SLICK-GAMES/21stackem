@@ -1,0 +1,506 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Mobile-first responsive design improvements */
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Improve touch targets on mobile */
+  button,
+  [role="button"],
+  input[type="submit"],
+  input[type="button"] {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Better focus states for accessibility */
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible {
+    outline: 2px solid rgb(249 115 22);
+    outline-offset: 2px;
+  }
+}
+
+/* Touch-friendly interactions */
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+
+  /* Smooth scrolling for better mobile experience */
+  .smooth-scroll {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/* Custom animations */
+@keyframes scroll {
+  0% {
+    transform: translateX(100%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.animate-scroll {
+  animation: scroll 45s linear infinite;
+}
+
+/* Collapsible section animations */
+@keyframes slideDown {
+  from {
+    max-height: 0;
+    opacity: 0;
+  }
+  to {
+    max-height: 2000px;
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    max-height: 2000px;
+    opacity: 1;
+  }
+  to {
+    max-height: 0;
+    opacity: 0;
+  }
+}
+
+.collapsible-enter {
+  animation: slideDown 0.3s ease-in-out;
+}
+
+.collapsible-exit {
+  animation: slideUp 0.3s ease-in-out;
+}
+
+/* Spin wheel transition */
+.duration-3000 {
+  transition-duration: 3000ms;
+}
+
+/* Hide scrollbars but keep functionality */
+.scrollbar-hide {
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none; /* Safari and Chrome */
+}
+
+/* Mobile-optimized scrollbars */
+@media (max-width: 768px) {
+  .scrollbar-hide {
+    scrollbar-width: thin;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    width: 2px;
+    display: block;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar-track {
+    background: rgba(75, 85, 99, 0.3);
+  }
+
+  .scrollbar-hide::-webkit-scrollbar-thumb {
+    background: rgba(249, 115, 22, 0.5);
+    border-radius: 1px;
+  }
+}
+
+/* Responsive text scaling */
+@media (max-width: 640px) {
+  .text-responsive {
+    font-size: clamp(0.875rem, 2.5vw, 1rem);
+  }
+
+  .text-responsive-lg {
+    font-size: clamp(1.125rem, 4vw, 1.5rem);
+  }
+
+  .text-responsive-xl {
+    font-size: clamp(1.5rem, 5vw, 2rem);
+  }
+}
+
+/* Animation utilities */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInRight {
+  from {
+    opacity: 0;
+    transform: translateX(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInUp {
+  from {
+    opacity: 0;
+    transform: translateY(100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-100%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes rotateIn {
+  from {
+    opacity: 0;
+    transform: rotate(-10deg) scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: rotate(0deg) scale(1);
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.6s ease-out forwards;
+}
+
+.animate-slideInLeft {
+  animation: slideInLeft 0.7s ease-out forwards;
+}
+
+.animate-slideInRight {
+  animation: slideInRight 0.7s ease-out forwards;
+}
+
+.animate-slideInUp {
+  animation: slideInUp 0.7s ease-out forwards;
+}
+
+.animate-slideInDown {
+  animation: slideInDown 0.7s ease-out forwards;
+}
+
+.animate-scaleIn {
+  animation: scaleIn 0.5s ease-out forwards;
+}
+
+.animate-rotateIn {
+  animation: rotateIn 0.6s ease-out forwards;
+}
+
+/* Dramatic banner slam animation */
+@keyframes bannerSlam {
+  0% {
+    transform: translateY(0) scale(1);
+  }
+  20% {
+    transform: translateY(-8px) scale(1.02);
+  }
+  40% {
+    transform: translateY(4px) scale(0.98);
+  }
+  60% {
+    transform: translateY(-2px) scale(1.01);
+  }
+  80% {
+    transform: translateY(1px) scale(0.995);
+  }
+  100% {
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-bannerSlam {
+  animation: bannerSlam 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Screen shake effect */
+@keyframes screenShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10% {
+    transform: translateX(-2px) translateY(1px);
+  }
+  20% {
+    transform: translateX(2px) translateY(-1px);
+  }
+  30% {
+    transform: translateX(-1px) translateY(2px);
+  }
+  40% {
+    transform: translateX(1px) translateY(-2px);
+  }
+  50% {
+    transform: translateX(-2px) translateY(1px);
+  }
+  60% {
+    transform: translateX(2px) translateY(-1px);
+  }
+  70% {
+    transform: translateX(-1px) translateY(2px);
+  }
+  80% {
+    transform: translateX(1px) translateY(-1px);
+  }
+  90% {
+    transform: translateX(-1px) translateY(1px);
+  }
+}
+
+/* Enhanced game card entrance */
+@keyframes gameCardSlam {
+  0% {
+    transform: translateY(20px) scale(0.8) rotate(5deg);
+    opacity: 0;
+  }
+  70% {
+    transform: translateY(-2px) scale(1.05) rotate(-1deg);
+    opacity: 0.9;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* Improved mobile form inputs */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  textarea {
+    font-size: 16px; /* Prevents zoom on iOS */
+    border-radius: 8px;
+  }
+}
+
+/* Mobile-friendly modal positioning */
+@media (max-width: 640px) {
+  .modal-mobile {
+    margin: 1rem;
+    max-height: calc(100vh - 2rem);
+    overflow-y: auto;
+  }
+}
+
+/* Better mobile grid layouts */
+@media (max-width: 768px) {
+  .mobile-grid-fix {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+}
+
+/* Optimize animations for mobile performance */
+@media (prefers-reduced-motion: reduce) {
+  .animate-scroll,
+  .animate-spin,
+  .animate-pulse,
+  .animate-bounce {
+    animation: none;
+  }
+
+  .transition-all,
+  .transition-colors,
+  .transition-transform {
+    transition: none;
+  }
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translate(0, 0);
+  }
+  25% {
+    transform: translate(10px, -20px);
+  }
+  50% {
+    transform: translate(-15px, 10px);
+  }
+  75% {
+    transform: translate(20px, 15px);
+  }
+}
+
+@keyframes cardFall {
+  0% {
+    transform: translateY(-1000px) rotateZ(-20deg);
+    opacity: 0;
+  }
+  60% {
+    transform: translateY(30px) rotateZ(5deg);
+    opacity: 1;
+  }
+  80% {
+    transform: translateY(-10px) rotateZ(-2deg);
+  }
+  100% {
+    transform: translateY(0) rotateZ(0);
+    opacity: 1;
+  }
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  overflow-y: auto; /* Allow vertical scroll */
+  background:
+    radial-gradient(
+      circle at 20% 30%,
+      rgba(255, 140, 0, 0.3) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 60%,
+      rgba(255, 85, 0, 0.25) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 40% 80%,
+      rgba(255, 165, 0, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 60% 20%,
+      rgba(255, 100, 0, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 90% 85%,
+      rgba(255, 120, 0, 0.2) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 10% 70%,
+      rgba(255, 150, 0, 0.18) 0%,
+      transparent 50%
+    ),
+    #000000;
+  background-attachment: fixed;
+}
+
+@keyframes rise {
+  0% {
+    transform: translateZ(0px) scale(0.8) rotateX(0deg);
+    opacity: 0.7;
+    box-shadow:
+      0 0px 0px rgba(0, 0, 0, 0.2),
+      /* No ground shadow at start */ 0 0 5px rgba(255, 255, 255, 0.4); /* Dim glow */
+  }
+  50% {
+    transform: translateZ(8px) scale(1.05) rotateX(5deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateZ(15px) scale(1) rotateX(10deg);
+    opacity: 1;
+    box-shadow: /* Full elevated shadows */
+      0 8px 16px rgba(0, 0, 0, 0.4),
+      0 0 5px rgba(255, 255, 255, 0.8),
+      0 0 10px rgba(255, 215, 0, 0.6),
+      0 0 15px var(--player-color) 80; /* Use CSS var for dynamic color */
+  }
+}
+
+.animate-rise {
+  animation: rise 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55) forwards;
+}
+
+/* Parent board needs perspective for 3D to work */
+.board-container {
+  perspective: 800px; /* Adjust based on board size */
+  transform-style: preserve-3d;
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-20px) rotate(180deg);
+  }
+}

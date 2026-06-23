@@ -1,0 +1,176 @@
+/* GameHub Integration Styles */
+
+/* Background matching GameHub */
+.gamehub-background {
+  background: linear-gradient(135deg, #111827 0%, #1f2937 50%, #000000 100%);
+  position: relative;
+  min-height: 100vh;
+}
+
+.gamehub-background::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 1;
+  
+  /* Diagonal pinstripes */
+  background-image: 
+    repeating-linear-gradient(
+      45deg,
+      transparent,
+      transparent 2px,
+      rgba(249, 115, 22, 0.1) 2px,
+      rgba(249, 115, 22, 0.1) 4px,
+      transparent 4px,
+      transparent 8px,
+      rgba(156, 163, 175, 0.1) 8px,
+      rgba(156, 163, 175, 0.1) 10px
+    ),
+    repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 6px,
+      rgba(239, 68, 68, 0.05) 6px,
+      rgba(239, 68, 68, 0.05) 8px
+    );
+}
+
+.gamehub-background::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  opacity: 0.3;
+  pointer-events: none;
+  z-index: 2;
+  
+  /* Vertical gradient stripes */
+  background-image: 
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 40px,
+      rgba(249, 115, 22, 0.08) 40px,
+      rgba(249, 115, 22, 0.08) 42px,
+      transparent 42px,
+      transparent 80px,
+      rgba(156, 163, 175, 0.06) 80px,
+      rgba(156, 163, 175, 0.06) 82px
+    );
+}
+
+/* Radial gradient overlay */
+.gamehub-background > * {
+  position: relative;
+  z-index: 10;
+}
+
+/* GameHub themed components */
+.gamehub-card {
+  background: linear-gradient(135deg, rgba(31, 41, 55, 0.8) 0%, rgba(17, 24, 39, 0.8) 100%);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(249, 115, 22, 0.1);
+}
+
+.gamehub-button {
+  background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 10px 25px -5px rgba(249, 115, 22, 0.3);
+}
+
+.gamehub-button:hover {
+  background: linear-gradient(135deg, #ea580c 0%, #dc2626 100%);
+  transform: translateY(-2px);
+  box-shadow: 0 15px 35px -5px rgba(249, 115, 22, 0.4);
+}
+
+.gamehub-button:active {
+  transform: translateY(0);
+}
+
+.gamehub-input {
+  background: rgba(31, 41, 55, 0.5);
+  border: 1px solid rgba(107, 114, 128, 0.5);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.gamehub-input:focus {
+  outline: none;
+  border-color: rgba(249, 115, 22, 0.5);
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.gamehub-input::placeholder {
+  color: rgba(156, 163, 175, 1);
+}
+
+/* Animations */
+@keyframes gamehub-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.gamehub-pulse {
+  animation: gamehub-pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+@keyframes gamehub-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.gamehub-spin {
+  animation: gamehub-spin 1s linear infinite;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .gamehub-background::before,
+  .gamehub-background::after {
+    opacity: 0.2;
+  }
+}
+
+/* Scrollbar styling */
+.gamehub-scrollbar::-webkit-scrollbar {
+  width: 6px;
+}
+
+.gamehub-scrollbar::-webkit-scrollbar-track {
+  background: rgba(31, 41, 55, 0.3);
+  border-radius: 3px;
+}
+
+.gamehub-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.5);
+  border-radius: 3px;
+}
+
+.gamehub-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(249, 115, 22, 0.7);
+}
