@@ -1,0 +1,8 @@
+{
+  "name": "bsg-platform-deploy",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "netlify-build": "npm --prefix apps/games/21-stackem ci && npm --prefix apps/games/21-stackem run export:web && node scripts/copy-stackem-web-build.js"
+  }
+}
