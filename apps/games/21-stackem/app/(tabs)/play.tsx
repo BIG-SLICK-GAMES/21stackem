@@ -1,4 +1,3 @@
-import { Redirect } from "expo-router";
 import { ActivityIndicator, StyleSheet, View } from "react-native";
 
 import { GameExperience } from "../../src/game/GameExperience";
@@ -6,7 +5,7 @@ import { useHubSession } from "../../src/platform/auth/session";
 import { theme } from "../../src/theme";
 
 export default function PlayTabScreen() {
-  const { isReady, status } = useHubSession();
+  const { isReady } = useHubSession();
 
   if (!isReady) {
     return (
@@ -14,10 +13,6 @@ export default function PlayTabScreen() {
         <ActivityIndicator color={theme.colors.accent} />
       </View>
     );
-  }
-
-  if (status !== "authenticated") {
-    return <Redirect href="/" />;
   }
 
   return <GameExperience />;

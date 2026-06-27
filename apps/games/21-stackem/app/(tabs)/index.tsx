@@ -1,3 +1,5 @@
-import { PortalScreen } from "../../src/screens/PortalScreen";
+import { Redirect } from "expo-router";
 
-export default PortalScreen;
+export default function IndexScreen() {
+  return <Redirect href="/stackem" />;
+}

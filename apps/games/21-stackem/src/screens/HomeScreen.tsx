@@ -236,7 +236,7 @@ export function HomeScreen() {
   const playerName =
     profile?.sUserName?.trim() ||
     (status === "authenticated" ? "Player" : "Local");
-  const rawBalance = profile?.nChips ?? 18342.81;
+  const rawBalance = profile?.nChips ?? 10000;
   const selectedDifficultyOption =
     difficultyOptions.find((option) => option.key === selectedDifficulty) ??
     difficultyOptions[0];
