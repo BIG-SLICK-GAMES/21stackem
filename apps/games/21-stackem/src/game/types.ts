@@ -3,6 +3,7 @@ export const HAND_SIZE = 3;
 export const TARGET_TOTAL = 21;
 export const DECK_PASSES = 1;
 export type GameDifficultyKey = "easy" | "medium" | "hard";
+export type GameMode = "classic" | "quake";
 
 export type StandardTileRank =
   | "A"
@@ -81,8 +82,18 @@ export interface GameWorld {
   };
   linesCompleted: number;
   message: string;
+  mode: GameMode;
   moveCost: number;
   payout: number;
+  quake?: {
+    holding: StackTile[];
+    lastCleared: StackTile[];
+    nextQuakeAt: number;
+    quakeCount: number;
+    quakeIntervalSeconds: number;
+    selectedTotal: number;
+    stacks: StackTile[][][];
+  };
   queue: StackTile[];
   result: StackemResult | null;
   rowLines: LineSummary[];

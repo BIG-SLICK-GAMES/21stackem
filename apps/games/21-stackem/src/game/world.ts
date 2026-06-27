@@ -1,5 +1,6 @@
 import {
   DECK_PASSES,
+  GameMode,
   GameDifficultyKey,
   GameWorld,
   GRID_SIZE,
@@ -36,7 +37,20 @@ export type WorldDifficultyConfig = {
   blackjackBonus?: number;
   bustPenalty?: number;
   difficulty?: GameDifficultyKey;
+  mode?: GameMode;
   openingTiles?: number;
+};
+
+const QUAKE_START_INTERVAL_SECONDS = 60;
+const QUAKE_INTERVAL_STEP_SECONDS = 5;
+const QUAKE_MIN_INTERVAL_SECONDS = 5;
+const QUAKE_HOLDING_LIMIT = 5;
+const QUAKE_MAX_STACK_HEIGHT = 10;
+const QUAKE_ANTE_POINTS = 50;
+const QUAKE_SPAWN_BY_DIFFICULTY: Record<GameDifficultyKey, number> = {
+  easy: 4,
+  hard: 12,
+  medium: 6
 };
 
 export function calculateMoveCost(_buyIn: number) {
@@ -62,6 +76,10 @@ export function createWorld(
   difficultyConfig: WorldDifficultyConfig = {},
   runId = Date.now()
 ): GameWorld {
+  if (difficultyConfig.mode === "quake") {
+    return createQuakeWorld(buyIn, difficultyConfig, runId);
+  }
+
   const deck = buildDeck();
   const seededOpening = seedOpeningBoard(
     deck,
@@ -100,9 +118,69 @@ export function createWorld(
     },
     linesCompleted: 0,
     message: "Place tiles, protect the bankroll, and chase 21s for fixed payouts.",
+    mode: "classic",
     moveCost: calculateMoveCost(buyIn),
     payout: buyIn,
     queue: stabilizeQueueForBoard(drawn, board),
+    result: null,
+    rowLines,
+    runId,
+    score: 0,
+    status: "playing",
+    turns: 0
+  };
+}
+
+function createQuakeWorld(
+  buyIn: number,
+  difficultyConfig: WorldDifficultyConfig = {},
+  runId = Date.now()
+): GameWorld {
+  const deck = buildDeck();
+  const { board, deck: nextDeck, stacks } = dealInitialQuakeStacks(deck, runId);
+  const blackjackBonus = calculateBlackjackBonus(
+    buyIn,
+    difficultyConfig.blackjackBonus ?? DEFAULT_BLACKJACK_BONUS
+  );
+  const bustPenalty = calculateBustPenalty(
+    buyIn,
+    difficultyConfig.bustPenalty ?? DEFAULT_BUST_PENALTY
+  );
+  const rowLines = buildRowLines(board);
+  const columnLines = buildColumnLines(board);
+
+  return {
+    blackjackBonus,
+    bankroll: buyIn,
+    board,
+    buyIn,
+    bustPenalty,
+    columnLines,
+    combo: 0,
+    deck: nextDeck,
+    difficulty: difficultyConfig.difficulty ?? "easy",
+    event: "start",
+    eventNonce: 1,
+    lastPlacement: null,
+    lineBurst: {
+      columns: [],
+      rows: []
+    },
+    linesCompleted: 0,
+    message: "Quake: pick tiles into the tray until they total exactly 21.",
+    mode: "quake",
+    moveCost: calculateMoveCost(buyIn),
+    payout: buyIn,
+    quake: {
+      holding: [],
+      lastCleared: [],
+      nextQuakeAt: runId + QUAKE_START_INTERVAL_SECONDS * 1000,
+      quakeCount: 0,
+      quakeIntervalSeconds: QUAKE_START_INTERVAL_SECONDS,
+      selectedTotal: 0,
+      stacks
+    },
+    queue: [],
     result: null,
     rowLines,
     runId,
@@ -268,6 +346,171 @@ export function rankLabel(rank: TileRank) {
   return rank;
 }
 
+export function canSelectQuakeTile(world: GameWorld, row: number, col: number) {
+  return (
+    world.mode === "quake" &&
+    world.status === "playing" &&
+    row >= 0 &&
+    row < GRID_SIZE &&
+    col >= 0 &&
+    col < GRID_SIZE &&
+    Boolean(world.quake?.stacks[row]?.[col]?.length)
+  );
+}
+
+export function selectQuakeTile(world: GameWorld, row: number, col: number): GameWorld {
+  if (!canSelectQuakeTile(world, row, col) || !world.quake) {
+    return world;
+  }
+
+  const stack = world.quake.stacks[row][col];
+  const tile = stack[stack.length - 1];
+
+  if (!tile) {
+    return world;
+  }
+
+  const stacks = cloneQuakeStacks(world.quake.stacks);
+  stacks[row][col] = stacks[row][col].slice(0, -1);
+  const board = boardFromStacks(stacks);
+  const holding = [...world.quake.holding, tile];
+  const selectedTotal = evaluateHand(holding);
+  const eventNonce = world.eventNonce + 1;
+  const baseWorld: GameWorld = {
+    ...world,
+    board,
+    columnLines: buildColumnLines(board),
+    event: selectedTotal === TARGET_TOTAL ? "lock" : "place",
+    eventNonce,
+    lastPlacement: { col, row },
+    lineBurst: { columns: [], rows: [] },
+    message: `Holding total ${selectedTotal}.`,
+    quake: {
+      ...world.quake,
+      holding,
+      lastCleared: [],
+      selectedTotal,
+      stacks
+    },
+    rowLines: buildRowLines(board),
+    turns: world.turns + 1
+  };
+
+  if (selectedTotal === TARGET_TOTAL) {
+    const tileMultiplier = Math.min(Math.max(holding.length, 2), QUAKE_HOLDING_LIMIT);
+    const reward = QUAKE_ANTE_POINTS * tileMultiplier;
+    const clearedWorld: GameWorld = {
+      ...baseWorld,
+      combo: baseWorld.combo + 1,
+      linesCompleted: baseWorld.linesCompleted + 1,
+      message: `21 hit with ${holding.length} tiles. x${tileMultiplier} for +${reward}.`,
+      quake: {
+        ...baseWorld.quake!,
+        holding: [],
+        lastCleared: holding,
+        selectedTotal: 0
+      },
+      score: baseWorld.score + reward
+    };
+
+    if (isQuakeBoardCleared(stacks)) {
+      return finishQuakeWorld(
+        {
+          ...clearedWorld,
+          message: "21 hit and the board is clear. You beat Quake."
+        },
+        "board-sealed"
+      );
+    }
+
+    return clearedWorld;
+  }
+
+  if (selectedTotal > TARGET_TOTAL) {
+    return finishQuakeWorld(
+      {
+        ...baseWorld,
+        event: "bust",
+        message: `Holding total ${selectedTotal}. Bust. Quake run over.`
+      },
+      "bust"
+    );
+  }
+
+  if (holding.length >= QUAKE_HOLDING_LIMIT) {
+    return finishQuakeWorld(
+      {
+        ...baseWorld,
+        message: `Holding filled at ${selectedTotal}. Quake run over.`
+      },
+      "bust"
+    );
+  }
+
+  if (isQuakeBoardCleared(stacks)) {
+    return finishQuakeWorld(
+      {
+        ...baseWorld,
+        message: "Board cleared. You beat Quake."
+      },
+      "board-sealed"
+    );
+  }
+
+  return baseWorld;
+}
+
+export function triggerQuake(world: GameWorld, now = Date.now()): GameWorld {
+  if (world.mode !== "quake" || world.status !== "playing" || !world.quake) {
+    return world;
+  }
+
+  const quakeCount = world.quake.quakeCount + 1;
+  const quakeIntervalSeconds = Math.max(
+    QUAKE_MIN_INTERVAL_SECONDS,
+    QUAKE_START_INTERVAL_SECONDS - quakeCount * QUAKE_INTERVAL_STEP_SECONDS
+  );
+  const { board, deck, spawned, stacks } = spawnQuakeTiles(
+    world.quake.stacks,
+    world.deck,
+    now + quakeCount,
+    world.difficulty
+  );
+  const maxStackHeight = getMaxQuakeStackHeight(stacks);
+
+  const nextWorld: GameWorld = {
+    ...world,
+    board,
+    columnLines: buildColumnLines(board),
+    deck,
+    event: "place",
+    eventNonce: world.eventNonce + 1,
+    lastPlacement: null,
+    lineBurst: { columns: [], rows: [] },
+    message: `Quake wave ${quakeCount}. ${spawned} new tiles rise from the board.`,
+    quake: {
+      ...world.quake,
+      nextQuakeAt: now + quakeIntervalSeconds * 1000,
+      quakeCount,
+      quakeIntervalSeconds,
+      stacks
+    },
+    rowLines: buildRowLines(board)
+  };
+
+  if (maxStackHeight >= QUAKE_MAX_STACK_HEIGHT) {
+    return finishQuakeWorld(
+      {
+        ...nextWorld,
+        message: `A stack reached ${QUAKE_MAX_STACK_HEIGHT} tiles. Quake run over.`
+      },
+      "bust"
+    );
+  }
+
+  return nextWorld;
+}
+
 function resolveTurn(
   world: GameWorld,
   board: GameWorld["board"],
@@ -384,6 +627,31 @@ function finishWorld(
       linesCompleted: world.linesCompleted,
       payout: world.bankroll,
       placedTiles: world.turns,
+      reason,
+      runId: world.runId,
+      score: world.score,
+      turns: world.turns
+    },
+    status: reason === "bust" ? "bust" : "cleared"
+  };
+}
+
+function finishQuakeWorld(
+  world: GameWorld,
+  reason: "board-sealed" | "bust"
+): GameWorld {
+  const placedTiles = world.quake?.holding.length ?? 0;
+
+  return {
+    ...world,
+    event: reason === "bust" ? "bust" : "clear",
+    eventNonce: world.eventNonce + 1,
+    payout: world.bankroll,
+    result: {
+      bankroll: world.bankroll,
+      linesCompleted: world.linesCompleted,
+      payout: world.bankroll,
+      placedTiles,
       reason,
       runId: world.runId,
       score: world.score,
@@ -587,6 +855,111 @@ function drawTiles(deck: StackTile[], count: number) {
     deck: deck.slice(count),
     drawn: deck.slice(0, count)
   };
+}
+
+function dealInitialQuakeStacks(deck: StackTile[], seed: number) {
+  const nextDeck = deck.length >= GRID_SIZE * GRID_SIZE ? [...deck] : buildDeck();
+  const stacks = createEmptyStacks();
+
+  for (let row = 0; row < GRID_SIZE; row += 1) {
+    for (let col = 0; col < GRID_SIZE; col += 1) {
+      const { deck: next, tile } = drawStandardTile(nextDeck, seed, row, col, 0);
+      nextDeck.splice(0, nextDeck.length, ...next);
+      stacks[row][col] = [tile];
+    }
+  }
+
+  return {
+    board: boardFromStacks(stacks),
+    deck: nextDeck,
+    stacks
+  };
+}
+
+function spawnQuakeTiles(
+  stacks: StackTile[][][],
+  deck: StackTile[],
+  seed: number,
+  difficulty: GameDifficultyKey
+) {
+  const nextDeck = deck.length >= GRID_SIZE * GRID_SIZE ? [...deck] : buildDeck();
+  const nextStacks = cloneQuakeStacks(stacks);
+  const spawnCount = QUAKE_SPAWN_BY_DIFFICULTY[difficulty] ?? QUAKE_SPAWN_BY_DIFFICULTY.easy;
+
+  for (let index = 0; index < spawnCount; index += 1) {
+    const row = Math.floor(Math.random() * GRID_SIZE);
+    const col = Math.floor(Math.random() * GRID_SIZE);
+    const { deck: next, tile } = drawStandardTile(
+      nextDeck,
+      seed,
+      row,
+      col,
+      nextStacks[row][col].length
+    );
+
+    nextDeck.splice(0, nextDeck.length, ...next);
+    if (nextStacks[row][col].length) {
+      nextStacks[row][col] = [tile, ...nextStacks[row][col]];
+    } else {
+      nextStacks[row][col] = [tile];
+    }
+  }
+
+  return {
+    board: boardFromStacks(nextStacks),
+    deck: nextDeck,
+    spawned: spawnCount,
+    stacks: nextStacks
+  };
+}
+
+function drawStandardTile(deck: StackTile[], seed: number, row: number, col: number, level: number) {
+  const nextDeck = [...deck];
+  let tile = nextDeck.shift();
+
+  while (tile && tile.kind !== "standard") {
+    tile = nextDeck.shift();
+  }
+
+  if (!tile) {
+    const freshDeck = buildDeck().filter((candidate) => candidate.kind === "standard");
+    tile = freshDeck[0];
+    nextDeck.push(...freshDeck.slice(1));
+  }
+
+  return {
+    deck: nextDeck,
+    tile: {
+      ...tile,
+      id: `${tile.id}-quake-${seed}-${row}-${col}-${level}`,
+      value: tile.rank === "A" ? 1 : tile.value
+    }
+  };
+}
+
+function createEmptyStacks() {
+  return Array.from({ length: GRID_SIZE }, () =>
+    Array.from({ length: GRID_SIZE }, () => [] as StackTile[])
+  );
+}
+
+function cloneQuakeStacks(stacks: StackTile[][][]) {
+  return stacks.map((row) => row.map((stack) => [...stack]));
+}
+
+function boardFromStacks(stacks: StackTile[][][]) {
+  return stacks.map((row) => row.map((stack) => stack[stack.length - 1] ?? null));
+}
+
+function isQuakeBoardCleared(stacks: StackTile[][][]) {
+  return stacks.every((row) => row.every((stack) => stack.length === 0));
+}
+
+function getMaxQuakeStackHeight(stacks: StackTile[][][]) {
+  return stacks.reduce(
+    (maxRow, row) => Math.max(maxRow, ...row.map((stack) => stack.length)),
+    0
+  );
 }
 
 function buildRowLines(board: GameWorld["board"], previousLines?: LineSummary[]) {

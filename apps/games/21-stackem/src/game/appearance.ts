@@ -25,10 +25,10 @@ export type StackemAppearance = {
 
 const THEMES: Record<VisualThemeKey, Pick<StackemAppearance, "bannerAccent" | "bannerGlowCool" | "bannerGlowWarm" | "bannerGradient">> = {
   classic: {
-    bannerAccent: "#ffd678",
-    bannerGlowCool: "rgba(129, 201, 255, 0.24)",
-    bannerGlowWarm: "rgba(255, 214, 120, 0.16)",
-    bannerGradient: ["#173855", "#061421", "#0a1e2c"]
+    bannerAccent: "#ffb02e",
+    bannerGlowCool: "rgba(50, 210, 255, 0.18)",
+    bannerGlowWarm: "rgba(255, 144, 36, 0.24)",
+    bannerGradient: ["#172640", "#0a1020", "#20112f"]
   },
   ocean: {
     bannerAccent: "#9edfff",
@@ -46,13 +46,13 @@ const THEMES: Record<VisualThemeKey, Pick<StackemAppearance, "bannerAccent" | "b
 
 const BOARDS: Record<BoardPaletteKey, Pick<StackemAppearance, "boardBackground" | "boardBorder" | "cellBackground" | "cellBorder" | "cellPlayableBorder" | "lineLockedBackground" | "lineNeutralBackground" | "lineText">> = {
   felt: {
-    boardBackground: "rgba(4, 17, 29, 0.95)",
-    boardBorder: "rgba(112, 164, 205, 0.42)",
-    cellBackground: "rgba(12, 40, 62, 0.74)",
-    cellBorder: "rgba(117, 167, 206, 0.24)",
-    cellPlayableBorder: "rgba(159, 224, 255, 0.55)",
-    lineLockedBackground: "rgba(88, 159, 213, 0.32)",
-    lineNeutralBackground: "rgba(22, 55, 81, 0.7)",
+    boardBackground: "rgba(12, 18, 35, 0.98)",
+    boardBorder: "rgba(255, 176, 46, 0.55)",
+    cellBackground: "rgba(24, 32, 56, 0.92)",
+    cellBorder: "rgba(255, 255, 255, 0.12)",
+    cellPlayableBorder: "rgba(255, 176, 46, 0.72)",
+    lineLockedBackground: "rgba(38, 209, 124, 0.34)",
+    lineNeutralBackground: "rgba(38, 48, 78, 0.92)",
     lineText: "#f5f8ff"
   },
   midnight: {
@@ -79,14 +79,14 @@ const BOARDS: Record<BoardPaletteKey, Pick<StackemAppearance, "boardBackground" 
 
 const TILES: Record<TilePaletteKey, Pick<StackemAppearance, "tileCoreGlow" | "tileGloss" | "tileRank" | "tileSurface">> = {
   ivory: {
-    tileCoreGlow: "rgba(158, 223, 255, 0.28)",
+    tileCoreGlow: "rgba(255, 255, 255, 0.18)",
     tileGloss: [
-      "rgba(190, 235, 255, 0.72)",
-      "rgba(55, 126, 190, 0.42)",
-      "rgba(3, 18, 32, 0.2)"
+      "rgba(255, 255, 255, 0.22)",
+      "rgba(255, 255, 255, 0.04)",
+      "rgba(0, 0, 0, 0.08)"
     ],
-    tileRank: "#f7fbff",
-    tileSurface: ["#6bb6ee", "#1f5f9d", "#0b2742"]
+    tileRank: "#ffffff",
+    tileSurface: ["#ff9b21", "#f97316", "#b84208"]
   },
   jade: {
     tileCoreGlow: "rgba(158, 223, 255, 0.3)",

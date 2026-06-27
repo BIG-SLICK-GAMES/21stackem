@@ -24,6 +24,7 @@ import { useGameSettings } from "../store/game-settings";
 import { theme } from "../theme";
 
 type EntryDifficulty = "easy" | "medium" | "hard";
+type EntryMode = "classic" | "quake";
 const PREVIEW_TARGET_TOTAL = 21;
 
 // ─── Logo ────────────────────────────────────────────────────────────────────
@@ -165,10 +166,65 @@ const previewTutorialTiles = [
   { col: 2, label: "5", row: 0 }
 ];
 
+const quakeSpawnCounts: Record<EntryDifficulty, number> = {
+  easy: 4,
+  hard: 12,
+  medium: 6
+};
+
+const quakeBoardDemoTiles = [
+  ["A", "2", "3", "4", "K"],
+  ["8", "10", "7", "Q", "9"],
+  ["J", "5", "6", "A", "3"],
+  ["4", "K", "8", "2", "Q"],
+  ["7", "9", "J", "6", "5"]
+].flatMap((row, rowIndex) =>
+  row.map((rank, colIndex) => ({
+    col: colIndex,
+    height: ((rowIndex + colIndex) % 3) + 1,
+    label: rank,
+    rank,
+    row: rowIndex
+  }))
+);
+
+const quakeTutorialTiles = [
+  { col: 1, height: 1, label: "10", rank: "10", row: 1 },
+  { col: 1, height: 2, label: "5", rank: "5", row: 2 },
+  { col: 2, height: 3, label: "6", rank: "6", row: 2 }
+];
+
+const quakeHoldingDemo = [
+  { label: "10", rank: "10" },
+  { label: "5", rank: "5" },
+  { label: "6", rank: "6" }
+];
+
+function getQuakePreviewTileColor(rank: string) {
+  const rankColors: Record<string, string> = {
+    A: "#b88900",
+    "2": "#0047a8",
+    "3": "#9e1414",
+    "4": "#4f1ea8",
+    "5": "#b94f00",
+    "6": "#006f37",
+    "7": "#68111f",
+    "8": "#0c1118",
+    "9": "#c49b00",
+    "10": "#005fc7",
+    J: "#b51d18",
+    Q: "#6028b9",
+    K: "#c76500"
+  };
+
+  return rankColors[rank] ?? "#1f2933";
+}
+
 export function HomeScreen() {
   const { settings } = useGameSettings();
   const { currentProduct, logout, profile, status, token } = useHubSession();
   const [activeMenu, setActiveMenu] = useState<AppNavKey>("game");
+  const [selectedMode, setSelectedMode] = useState<EntryMode>("classic");
   const [selectedDifficulty, setSelectedDifficulty] = useState<EntryDifficulty>("easy");
   const [showPayoutRules, setShowPayoutRules] = useState(false);
   const [dailyFreeGames, setDailyFreeGames] = useState<Record<EntryDifficulty, number>>({
@@ -215,7 +271,8 @@ export function HomeScreen() {
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setPreviewStep((current) => (current + 1) % (previewTutorialTiles.length + 2));
+      const stepCount = Math.max(previewTutorialTiles.length, quakeTutorialTiles.length) + 3;
+      setPreviewStep((current) => (current + 1) % stepCount);
     }, 620);
 
     return () => clearInterval(interval);
@@ -256,10 +313,119 @@ export function HomeScreen() {
         params: {
           buyIn: "100",
           difficulty: selectedDifficulty,
-          fresh: String(Date.now())
+          fresh: String(Date.now()),
+          mode: selectedMode
         }
       },
       "confirm"
+    );
+  }
+
+  function renderQuakePreview() {
+    const selectedTiles = quakeTutorialTiles.filter((_, index) => previewStep > index);
+    const quakeWaveActive = previewStep > quakeTutorialTiles.length;
+    const holdingTotal = selectedTiles.reduce((total, tile) => total + Number(tile.label), 0);
+
+    return (
+      <View style={styles.quakePreview}>
+        <View style={styles.quakePreviewHud}>
+          <View>
+            <Text style={styles.quakePreviewHudLabel}>Next Quake</Text>
+            <Text style={styles.quakePreviewHudValue}>00:{quakeWaveActive ? "55" : "60"}</Text>
+          </View>
+          <View style={styles.quakePreviewSpawnBadge}>
+            <Text style={styles.quakePreviewSpawnText}>
+              {quakeSpawnCounts[selectedDifficulty]} tiles / wave
+            </Text>
+          </View>
+        </View>
+
+        <View style={[styles.boardPreview, styles.quakePreviewBoard]}>
+          {previewBoardRows.map((row, rowIndex) => (
+            <View key={`quake-preview-row-${rowIndex}`} style={styles.boardPreviewRow}>
+              {row.map((cell) => {
+                const selectedTileIndex = selectedTiles.findIndex(
+                  (candidate) => candidate.row === cell.row && candidate.col === cell.col
+                );
+                const tile =
+                  selectedTileIndex >= 0
+                    ? null
+                    : quakeBoardDemoTiles.find(
+                        (candidate) => candidate.row === cell.row && candidate.col === cell.col
+                      );
+
+                return (
+                  <View
+                    key={`quake-preview-${cell.key}`}
+                    style={[
+                      styles.boardPreviewCell,
+                      styles.quakePreviewCell,
+                      quakeWaveActive && styles.quakePreviewCellWave,
+                      tile && styles.quakePreviewCellStack
+                    ]}
+                  >
+                    {tile ? (
+                      <View
+                        style={[
+                          styles.quakePreviewTile,
+                          {
+                            backgroundColor: getQuakePreviewTileColor(tile.rank),
+                            transform: [{ translateY: -Math.min(tile.height * 3, 12) }]
+                          }
+                        ]}
+                      >
+                        {Array.from({ length: Math.max(0, tile.height - 1) }, (_, layer) => (
+                          <View
+                            key={`quake-layer-${cell.key}-${layer}`}
+                            style={[
+                              styles.quakePreviewTileLayer,
+                              {
+                                backgroundColor: getQuakePreviewTileColor(tile.rank),
+                                transform: [{ translateY: (layer + 1) * 4 }]
+                              }
+                            ]}
+                          />
+                        ))}
+                        <Text style={styles.quakePreviewTileText}>{tile.label}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                );
+              })}
+            </View>
+          ))}
+        </View>
+
+        <View style={styles.quakePreviewHolding}>
+          <Text style={styles.quakePreviewHoldingTitle}>Holding Zone</Text>
+          <View style={styles.quakePreviewHoldingSlots}>
+            {Array.from({ length: 5 }, (_, index) => {
+              const tile = previewStep > index ? quakeHoldingDemo[index] : null;
+
+              return (
+                <View key={`quake-hold-${index}`} style={styles.quakePreviewHoldSlot}>
+                  {tile ? (
+                    <View
+                      style={[
+                        styles.quakePreviewHoldTile,
+                        { backgroundColor: getQuakePreviewTileColor(tile.rank) }
+                      ]}
+                    >
+                      <Text style={styles.quakePreviewTileText}>{tile.label}</Text>
+                    </View>
+                  ) : null}
+                </View>
+              );
+            })}
+          </View>
+          <Text style={styles.quakePreviewHoldingTotal}>
+            Total {holdingTotal || 0}{holdingTotal === 21 ? " - Clear!" : ""}
+          </Text>
+          <Text style={styles.quakePreviewCaption}>
+            Demo: select 10, 5, and 6 from the filled Quake board to make exactly 21.
+          </Text>
+        </View>
+      </View>
     );
   }
 
@@ -280,6 +446,36 @@ export function HomeScreen() {
 
     return (
       <>
+        <View style={styles.difficultyPillRow}>
+          {(["classic", "quake"] as EntryMode[]).map((mode) => {
+            const selected = selectedMode === mode;
+
+            return (
+              <Pressable
+                key={mode}
+                onPress={() => {
+                  void fireHaptic(settings.haptics, "tap");
+                  setSelectedMode(mode);
+                }}
+                style={({ pressed }) => [
+                  styles.difficultyPill,
+                  selected && styles.difficultyPillSelected,
+                  pressed && styles.cardPressed
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.difficultyPillText,
+                    selected && styles.difficultyPillTextSelected
+                  ]}
+                >
+                  {mode === "classic" ? "Classic" : "Quake"}
+                </Text>
+              </Pressable>
+            );
+          })}
+        </View>
+
         <View style={styles.difficultyPillRow}>
           {difficultyOptions.map((option) => {
             const selected = selectedDifficulty === option.key;
@@ -313,10 +509,14 @@ export function HomeScreen() {
 
         <View style={styles.boardPreviewShell}>
           <View style={styles.boardPreviewMetaRow}>
-            <Text style={styles.boardPreviewTitle}>Preview Board</Text>
+            <Text style={styles.boardPreviewTitle}>
+              {selectedMode === "quake" ? "Quake Preview" : "Preview Board"}
+            </Text>
             <View style={styles.boardPreviewMetaActions}>
               <Text style={styles.boardPreviewMeta}>
-                {selectedDifficultyOption.openingTiles} filled tiles
+                {selectedMode === "quake"
+                  ? `${quakeSpawnCounts[selectedDifficulty]} tiles per quake`
+                  : `${selectedDifficultyOption.openingTiles} filled tiles`}
               </Text>
               <Pressable
                 accessibilityLabel="Open 21 Stack'em tutorial"
@@ -335,6 +535,7 @@ export function HomeScreen() {
               </Pressable>
             </View>
           </View>
+          {selectedMode === "quake" ? renderQuakePreview() : (
           <View style={styles.boardPreviewWithTotals}>
             <View style={styles.boardPreviewTopTotals}>
               {previewColumnTotals.map((total, index) => (
@@ -430,6 +631,7 @@ export function HomeScreen() {
               </View>
             </View>
           </View>
+          )}
         </View>
 
         <Pressable
@@ -457,6 +659,95 @@ export function HomeScreen() {
   }
 
   function renderTutorialModal() {
+    if (selectedMode === "quake") {
+      return (
+        <Modal
+          animationType="fade"
+          onRequestClose={() => setShowPayoutRules(false)}
+          transparent
+          visible={showPayoutRules}
+        >
+          <View style={styles.tutorialOverlay}>
+            <View style={[styles.tutorialModal, styles.quakeTutorialModal]}>
+              <LinearGradient
+                colors={["#20100b", "#070709"]}
+                end={{ x: 1, y: 1 }}
+                start={{ x: 0, y: 0 }}
+                style={styles.tutorialHeader}
+              >
+                <View style={styles.tutorialHeaderCopy}>
+                  <Text style={styles.tutorialKicker}>How To Play</Text>
+                  <Text style={styles.tutorialTitle}>Stack'em: Quake</Text>
+                  <Text style={styles.tutorialLead}>
+                    Survive a rising board. Select only top tiles, make exactly 21 in the
+                    holding zone, and use manual quake when the board stalls.
+                  </Text>
+                </View>
+                <Pressable
+                  accessibilityLabel="Close tutorial"
+                  onPress={() => setShowPayoutRules(false)}
+                  style={({ pressed }) => [
+                    styles.tutorialClose,
+                    pressed && styles.tutorialClosePressed
+                  ]}
+                >
+                  <MaterialCommunityIcons color="#f7fbff" name="close" size={22} />
+                </Pressable>
+              </LinearGradient>
+
+              <ScrollView
+                contentContainerStyle={styles.tutorialScroll}
+                showsVerticalScrollIndicator={false}
+              >
+                <View style={styles.tutorialDemo}>{renderQuakePreview()}</View>
+
+                <View style={styles.tutorialStepGrid}>
+                  <TutorialStep
+                    icon="numeric-1-circle"
+                    title="Pick Top Tiles"
+                    body="Each cell is a stack. Only the top visible tile can be selected."
+                  />
+                  <TutorialStep
+                    icon="numeric-2-circle"
+                    title="Fill Holding Slots"
+                    body="Selected tiles move into 5 holding slots. Aces count as 1 or 11."
+                  />
+                  <TutorialStep
+                    icon="numeric-3-circle"
+                    title="Make Exactly 21"
+                    body="A 21 clears the holding zone and awards 50 points per tile used."
+                  />
+                  <TutorialStep
+                    icon="numeric-4-circle"
+                    title="Survive Quakes"
+                    body={`Easy spawns 4 tiles, Medium 6, Hard 12. A stack reaching 10 ends the run.`}
+                  />
+                </View>
+
+                <View style={styles.tutorialPayoutTable}>
+                  {difficultyOptions.map((option) => (
+                    <View
+                      key={`quake-tutorial-payout-${option.key}`}
+                      style={[
+                        styles.tutorialPayoutRow,
+                        selectedDifficulty === option.key && styles.tutorialPayoutRowActive
+                      ]}
+                    >
+                      <Text style={styles.tutorialPayoutDifficulty}>{option.label}</Text>
+                      <Text style={styles.tutorialPayoutValue}>
+                        {quakeSpawnCounts[option.key]} tiles
+                      </Text>
+                      <Text style={styles.tutorialPayoutMeta}>per quake wave</Text>
+                    </View>
+                  ))}
+                </View>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+      );
+    }
+
     const visiblePreviewTiles = previewTutorialTiles.filter(
       (_, index) => previewStep > index
     );
@@ -1010,10 +1301,10 @@ const styles = StyleSheet.create({
   },
   boardPreview: {
     aspectRatio: 1,
-    backgroundColor: "rgba(2, 11, 19, 0.86)",
-    borderColor: "rgba(126, 203, 255, 0.2)",
+    backgroundColor: "rgba(12, 18, 35, 0.98)",
+    borderColor: "rgba(255, 176, 46, 0.42)",
     borderRadius: 18,
-    borderWidth: 1,
+    borderWidth: 2,
     flex: 1,
     gap: 5,
     padding: 8,
@@ -1026,9 +1317,9 @@ const styles = StyleSheet.create({
   },
   boardPreviewCell: {
     alignItems: "center",
-    backgroundColor: "rgba(8, 26, 43, 0.92)",
-    borderColor: "rgba(84, 130, 171, 0.62)",
-    borderRadius: 10,
+    backgroundColor: "rgba(24, 32, 56, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.12)",
+    borderRadius: 9,
     borderWidth: 1,
     flex: 1,
     justifyContent: "center",
@@ -1052,39 +1343,36 @@ const styles = StyleSheet.create({
     gap: 8
   },
   boardPreviewSeedCell: {
-    backgroundColor: "#ffd678",
-    borderColor: "#fff0bd",
-    shadowColor: "#ffd678",
-    shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.26,
-    shadowRadius: 10
+    backgroundColor: "#ff8a21",
+    borderBottomColor: "#a83a06",
+    borderBottomWidth: 4,
+    borderColor: "#ffc266"
   },
   boardPreviewSeedText: {
-    color: "#082033",
+    color: "#ffffff",
     fontFamily: theme.fonts.display,
     fontSize: 24,
     lineHeight: 24
   },
   boardPreviewTutorialCell: {
-    backgroundColor: "#f7fbff",
-    borderColor: "#9edfff",
-    shadowColor: "#9edfff",
-    shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.34,
-    shadowRadius: 12
+    backgroundColor: "#3b82f6",
+    borderBottomColor: "#1d4ed8",
+    borderBottomWidth: 4,
+    borderColor: "#93c5fd"
   },
   boardPreviewTutorialCellComplete: {
-    backgroundColor: "#8ef0bc",
-    borderColor: "#d6ffe6"
+    backgroundColor: "#22c55e",
+    borderBottomColor: "#15803d",
+    borderColor: "#86efac"
   },
   boardPreviewTutorialText: {
-    color: "#082033",
+    color: "#ffffff",
     fontFamily: theme.fonts.display,
     fontSize: 22,
     lineHeight: 24
   },
   boardPreviewTutorialTextComplete: {
-    color: "#06140c"
+    color: "#ffffff"
   },
   boardPreviewRow: {
     flex: 1,
@@ -1097,8 +1385,8 @@ const styles = StyleSheet.create({
     width: 34
   },
   boardPreviewShell: {
-    backgroundColor: "rgba(7, 24, 40, 0.72)",
-    borderColor: "rgba(84, 130, 171, 0.48)",
+    backgroundColor: "rgba(9, 14, 28, 0.92)",
+    borderColor: "rgba(255, 176, 46, 0.28)",
     borderRadius: 22,
     borderWidth: 1.5,
     gap: 10,
@@ -1138,8 +1426,8 @@ const styles = StyleSheet.create({
     gap: 8
   },
   difficultyPillSelected: {
-    backgroundColor: "#ffd678",
-    borderColor: "#fff0bd"
+    backgroundColor: "#ff8a21",
+    borderColor: "#ffc266"
   },
   difficultyPillText: {
     color: "#f7fbff",
@@ -1149,7 +1437,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   },
   difficultyPillTextSelected: {
-    color: "#082033"
+    color: "#ffffff"
   },
   infoButton: {
     alignItems: "center",
@@ -1267,13 +1555,13 @@ const styles = StyleSheet.create({
     padding: 10
   },
   lobbyFrame: {
-    borderColor: "rgba(92, 137, 177, 0.72)",
+    borderColor: "rgba(255, 176, 46, 0.62)",
     borderRadius: 36,
     borderWidth: 2,
     elevation: 10,
     overflow: "hidden",
     padding: 8,
-    shadowColor: "#7ecbff",
+    shadowColor: "#ffb02e",
     shadowOffset: { height: 16, width: 0 },
     shadowOpacity: 0.22,
     shadowRadius: 26
@@ -1300,8 +1588,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12
   },
   menuButtonPrimary: {
-    backgroundColor: "#ffd678",
-    borderColor: "#fff0bd"
+    backgroundColor: "#ff8a21",
+    borderColor: "#ffc266"
   },
   menuButtonText: {
     color: "#f7fbff",
@@ -1311,11 +1599,11 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   },
   menuButtonTextPrimary: {
-    color: "#082033"
+    color: "#ffffff"
   },
   menuPanel: {
-    backgroundColor: "rgba(5, 18, 30, 0.92)",
-    borderColor: "rgba(105, 150, 190, 0.56)",
+    backgroundColor: "rgba(9, 14, 28, 0.94)",
+    borderColor: "rgba(255, 176, 46, 0.34)",
     borderRadius: 34,
     borderWidth: 2,
     elevation: 7,
@@ -1323,7 +1611,7 @@ const styles = StyleSheet.create({
     minHeight: 360,
     paddingHorizontal: 18,
     paddingVertical: 20,
-    shadowColor: "#7ecbff",
+    shadowColor: "#ffb02e",
     shadowOffset: { height: 12, width: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 22
@@ -1374,7 +1662,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     elevation: 5,
     overflow: "hidden",
-    shadowColor: "#7ecbff",
+    shadowColor: "#ff8a21",
     shadowOffset: { height: 10, width: 0 },
     shadowOpacity: 0.28,
     shadowRadius: 18
@@ -1677,8 +1965,8 @@ const styles = StyleSheet.create({
     minWidth: 0
   },
   previewTotalPillComplete: {
-    backgroundColor: "#8ef0bc",
-    borderColor: "#d6ffe6"
+    backgroundColor: "#22c55e",
+    borderColor: "#86efac"
   },
   previewTotalText: {
     color: theme.colors.subtleText,
@@ -1687,7 +1975,160 @@ const styles = StyleSheet.create({
     letterSpacing: 0
   },
   previewTotalTextComplete: {
-    color: "#06140c"
+    color: "#ffffff"
+  },
+  quakePreview: {
+    gap: 10,
+    width: "100%"
+  },
+  quakePreviewHud: {
+    alignItems: "center",
+    backgroundColor: "rgba(12, 8, 7, 0.96)",
+    borderColor: "rgba(255, 122, 0, 0.52)",
+    borderRadius: 16,
+    borderWidth: 1.5,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    paddingHorizontal: 12,
+    paddingVertical: 8
+  },
+  quakePreviewHudLabel: {
+    color: "rgba(255, 242, 221, 0.78)",
+    fontFamily: theme.fonts.label,
+    fontSize: 9,
+    letterSpacing: 1.2,
+    textTransform: "uppercase"
+  },
+  quakePreviewHudValue: {
+    color: "#ffb02e",
+    fontFamily: theme.fonts.display,
+    fontSize: 24,
+    lineHeight: 24
+  },
+  quakePreviewSpawnBadge: {
+    backgroundColor: "rgba(255, 122, 0, 0.14)",
+    borderColor: "rgba(255, 176, 46, 0.46)",
+    borderRadius: 999,
+    borderWidth: 1,
+    paddingHorizontal: 10,
+    paddingVertical: 5
+  },
+  quakePreviewSpawnText: {
+    color: "#fff2dd",
+    fontFamily: theme.fonts.label,
+    fontSize: 9,
+    letterSpacing: 1,
+    textTransform: "uppercase"
+  },
+  quakePreviewBoard: {
+    backgroundColor: "rgba(15, 15, 16, 0.98)",
+    borderColor: "rgba(255, 122, 0, 0.3)",
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.2,
+    shadowRadius: 14
+  },
+  quakePreviewCell: {
+    backgroundColor: "rgba(28, 26, 24, 0.96)",
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    overflow: "visible"
+  },
+  quakePreviewCellWave: {
+    borderColor: "rgba(255, 122, 0, 0.48)"
+  },
+  quakePreviewCellStack: {
+    shadowColor: "#ff7a00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 8
+  },
+  quakePreviewTile: {
+    alignItems: "center",
+    borderColor: "rgba(255, 255, 255, 0.22)",
+    borderRadius: 8,
+    borderWidth: 1,
+    height: "78%",
+    justifyContent: "center",
+    position: "relative",
+    width: "78%"
+  },
+  quakePreviewTileLayer: {
+    borderColor: "rgba(0, 0, 0, 0.2)",
+    borderRadius: 8,
+    borderWidth: 1,
+    bottom: 0,
+    left: 0,
+    opacity: 0.76,
+    position: "absolute",
+    right: 0,
+    top: 0
+  },
+  quakePreviewTileText: {
+    color: "#ffffff",
+    fontFamily: theme.fonts.display,
+    fontSize: 13,
+    lineHeight: 13,
+    textShadowColor: "rgba(0, 0, 0, 0.8)",
+    textShadowOffset: { height: 1, width: 0 },
+    textShadowRadius: 2,
+    zIndex: 2
+  },
+  quakePreviewHolding: {
+    backgroundColor: "rgba(10, 8, 7, 0.9)",
+    borderColor: "rgba(255, 122, 0, 0.34)",
+    borderRadius: 16,
+    borderWidth: 1,
+    gap: 7,
+    padding: 10
+  },
+  quakePreviewHoldingTitle: {
+    color: "#fff2dd",
+    fontFamily: theme.fonts.label,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textAlign: "center",
+    textTransform: "uppercase"
+  },
+  quakePreviewHoldingTotal: {
+    color: "#ffb02e",
+    fontFamily: theme.fonts.display,
+    fontSize: 18,
+    lineHeight: 18,
+    textAlign: "center"
+  },
+  quakePreviewHoldingSlots: {
+    flexDirection: "row",
+    gap: 6,
+    justifyContent: "center"
+  },
+  quakePreviewHoldSlot: {
+    alignItems: "center",
+    aspectRatio: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.42)",
+    borderColor: "rgba(255, 176, 46, 0.42)",
+    borderRadius: 8,
+    borderWidth: 1,
+    flex: 1,
+    justifyContent: "center",
+    maxWidth: 44
+  },
+  quakePreviewHoldTile: {
+    alignItems: "center",
+    borderRadius: 8,
+    height: "82%",
+    justifyContent: "center",
+    width: "82%"
+  },
+  quakePreviewCaption: {
+    color: "rgba(255, 242, 221, 0.72)",
+    fontFamily: theme.fonts.body,
+    fontSize: 11,
+    lineHeight: 15,
+    textAlign: "center"
+  },
+  quakeTutorialModal: {
+    backgroundColor: "#090807",
+    borderColor: "rgba(255, 122, 0, 0.42)"
   },
   sectionHeader: { gap: 2 },
   sectionMeta: {
@@ -1710,7 +2151,7 @@ const styles = StyleSheet.create({
     minWidth: 62,
     paddingVertical: 8
   },
-  seedBadgeSelected: { backgroundColor: "#ffd678", borderColor: "#fff0bd" },
+  seedBadgeSelected: { backgroundColor: "#ff8a21", borderColor: "#ffc266" },
   seedText: {
     color: theme.colors.subtleText,
     fontFamily: theme.fonts.label,
@@ -1723,7 +2164,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 22
   },
-  seedValueSelected: { color: "#082033" },
+  seedValueSelected: { color: "#ffffff" },
   setupPanel: {
     backgroundColor: "rgba(5, 18, 30, 0.92)",
     borderColor: "rgba(105, 150, 190, 0.56)",

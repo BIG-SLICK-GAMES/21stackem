@@ -54,36 +54,40 @@ export default function GamesGrid({ onGameClick }: GamesGridProps) {
               </div>
 
               <div className="text-center">
-                <p className="text-orange-300 text-xs font-bold uppercase tracking-wider">
+                <p className="text-orange-300 text-xs font-bold uppercase tracking-wider shadow-none [text-shadow:none]">
                   {game.status}
                 </p>
-                <h3 className="text-white font-black text-xl sm:text-2xl">
+                <h3 className="text-white font-black text-xl shadow-none [text-shadow:none] sm:text-2xl">
                   {game.name}
                 </h3>
               </div>
 
               {game.launchUrl ? (
-                <button
-                  onClick={() => onGameClick(game.id)}
-                  className={`w-full bg-gradient-to-r ${game.color} ${game.hoverColor} text-white py-3 font-bold text-base transition-all duration-300 rounded-lg shadow-lg ${game.glowColor} hover:shadow-xl flex items-center justify-center gap-2 active:scale-95 hover:scale-[1.02] border border-white/20 hover:border-white/40`}
-                >
-                  <Play className="w-5 h-5" />
-                  <span>PLAY NOW</span>
-                </button>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => onGameClick(game.id)}
+                    className="inline-flex min-w-36 items-center justify-center gap-2 rounded-full border border-orange-300 bg-orange-500 px-6 py-2.5 text-sm font-black text-white shadow-none outline-none backdrop-blur-0 filter-none transition-colors duration-200 [text-shadow:none] hover:border-orange-200 hover:bg-orange-400 active:scale-95"
+                  >
+                    <Play className="h-4 w-4" />
+                    <span>PLAY NOW</span>
+                  </button>
+                </div>
               ) : (
-                <Link
-                  to={game.infoPath}
-                  className={`w-full bg-gradient-to-r ${game.color} ${game.hoverColor} text-white py-3 font-bold text-base transition-all duration-300 rounded-lg shadow-lg ${game.glowColor} hover:shadow-xl flex items-center justify-center gap-2 active:scale-95 hover:scale-[1.02] border border-white/20 hover:border-white/40`}
-                >
-                  <Info className="w-5 h-5" />
-                  <span>INFO</span>
-                </Link>
+                <div className="flex justify-center">
+                  <Link
+                    to={game.infoPath}
+                    className="inline-flex min-w-32 items-center justify-center gap-2 rounded-full border border-orange-300 bg-orange-500 px-6 py-2.5 text-sm font-black text-white shadow-none outline-none backdrop-blur-0 filter-none transition-colors duration-200 [text-shadow:none] hover:border-orange-200 hover:bg-orange-400 active:scale-95"
+                  >
+                    <Info className="h-4 w-4" />
+                    <span>INFO</span>
+                  </Link>
+                </div>
               )}
 
               {game.launchUrl && (
                 <Link
                   to={game.infoPath}
-                  className="block text-center text-sm text-orange-300 hover:text-orange-200 font-semibold"
+                  className="block text-center text-sm font-semibold text-orange-300 shadow-none [text-shadow:none] hover:text-orange-200"
                 >
                   View game information
                 </Link>

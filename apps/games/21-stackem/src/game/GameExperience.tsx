@@ -34,6 +34,7 @@ import {
 } from "./leaderboard";
 import {
   GameWorld,
+  GameMode,
   GRID_SIZE,
   HAND_SIZE,
   LineSummary,
@@ -45,6 +46,7 @@ import {
   SHOE_COUNT,
   calculateBlackjackBonus,
   calculateBustPenalty,
+  canSelectQuakeTile,
   canPlaceAt,
   canSwapAt,
   createWorld,
@@ -54,7 +56,9 @@ import {
   isWildTile,
   placeQueueTile,
   previewPlacement,
-  swapBoardTile
+  selectQuakeTile,
+  swapBoardTile,
+  triggerQuake
 } from "./world";
 
 const RUN_DURATION_SECONDS = 180;
@@ -117,6 +121,7 @@ const SPECIAL_VALUE_OPTIONS: Array<{ label: string; rank: StandardTileRank }> = 
   { label: "10", rank: "10" }
 ] as const;
 const LIGHTNING_STRIKE_GIF = require("../../assets/images/Lihtning Pack/01 - GIF/Lightning_03.gif");
+const QUAKE_TILE_IMAGE = require("../../assets/images/quake-tile.png");
 
 function getSpecialOptionHint(rank: StandardTileRank) {
   return rank === "A" ? "1 or 11" : `value ${rank}`;
@@ -259,6 +264,88 @@ function useStackemAppearance() {
   return context;
 }
 
+function getBlockTileSurface(tile: StackTile): [string, string, string] {
+  if (tile.kind === "wild") {
+    return ["#ffe45c", "#f5a400", "#ad6500"];
+  }
+
+  if (tile.kind === "swap") {
+    return ["#d98cff", "#8b3df2", "#4f1aa6"];
+  }
+
+  const rankSurfaces: Record<StandardTileRank, [string, string, string]> = {
+    A: ["#ffe36e", "#f6c514", "#b88700"],
+    "2": ["#6bb8ff", "#1f75d6", "#0b3f8a"],
+    "3": ["#ff6b64", "#d82424", "#7f1111"],
+    "4": ["#b785ff", "#6c35c9", "#32106f"],
+    "5": ["#ffae55", "#f07a18", "#9c3d00"],
+    "6": ["#74df82", "#239c3b", "#0e5f22"],
+    "7": ["#b74855", "#7a1824", "#3f0810"],
+    "8": ["#4c5665", "#111827", "#020617"],
+    "9": ["#fff4aa", "#f6c514", "#b88700"],
+    "10": ["#d8ecff", "#1f75d6", "#0b3f8a"],
+    J: ["#ffe1df", "#d82424", "#7f1111"],
+    Q: ["#eadcff", "#6c35c9", "#32106f"],
+    K: ["#ffe0bd", "#f07a18", "#9c3d00"]
+  };
+
+  return rankSurfaces[tile.rank as StandardTileRank];
+}
+
+function getBlockTileTextColor(tile: StackTile) {
+  return tile.kind === "standard" && (tile.rank === "A" || tile.rank === "9")
+    ? "#231608"
+    : "#ffffff";
+}
+
+function getPoolTileTextColor(tile: StackTile) {
+  if (tile.kind !== "standard") {
+    return "#111111";
+  }
+
+  const textColors: Record<StandardTileRank, string> = {
+    A: "#d8a900",
+    "2": "#155ec9",
+    "3": "#c51f1a",
+    "4": "#6a32c5",
+    "5": "#e46f13",
+    "6": "#1f8e39",
+    "7": "#7b1823",
+    "8": "#111111",
+    "9": "#d8a900",
+    "10": "#155ec9",
+    J: "#c51f1a",
+    Q: "#6a32c5",
+    K: "#e46f13"
+  };
+
+  return textColors[tile.rank as StandardTileRank];
+}
+
+function getQuakeTileColor(tile: StackTile) {
+  if (tile.kind !== "standard") {
+    return "#343a40";
+  }
+
+  const rankColors: Record<StandardTileRank, string> = {
+    A: "#b88900",
+    "2": "#0047a8",
+    "3": "#9e1414",
+    "4": "#4f1ea8",
+    "5": "#b94f00",
+    "6": "#006f37",
+    "7": "#68111f",
+    "8": "#0c1118",
+    "9": "#c49b00",
+    "10": "#005fc7",
+    J: "#b51d18",
+    Q: "#6028b9",
+    K: "#c76500"
+  };
+
+  return rankColors[tile.rank as StandardTileRank];
+}
+
 function getCountdownCue(seconds: number) {
   if (seconds <= 10 && seconds >= 1) {
     return `${seconds}!`;
@@ -276,12 +363,14 @@ export function GameExperience() {
     buyIn?: string | string[];
     difficulty?: string | string[];
     fresh?: string | string[];
+    mode?: string | string[];
   }>();
   const buyInParam = Array.isArray(params.buyIn) ? params.buyIn[0] : params.buyIn;
   const difficultyParam = Array.isArray(params.difficulty)
     ? params.difficulty[0]
     : params.difficulty;
   const freshParam = Array.isArray(params.fresh) ? params.fresh[0] : params.fresh;
+  const modeParam = Array.isArray(params.mode) ? params.mode[0] : params.mode;
   const parsedBuyIn = Number(buyInParam);
   const requestedBuyIn =
     parsedBuyIn === 10 || parsedBuyIn === 100 || parsedBuyIn === 1000
@@ -295,11 +384,13 @@ export function GameExperience() {
     difficultyParam === "easy" || difficultyParam === "medium" || difficultyParam === "hard"
       ? difficultyParam
       : "easy";
+  const requestedMode: GameMode = modeParam === "quake" ? "quake" : "classic";
   const [selectedBuyIn, setSelectedBuyIn] = useState<number>(
     requestedBuyIn ?? getSessionBankroll(profile?.nChips)
   );
   const [selectedDifficulty, setSelectedDifficulty] =
     useState<SetupDifficulty>(initialDifficulty);
+  const [selectedMode, setSelectedMode] = useState<GameMode>(requestedMode);
   const [world, setWorld] = useState<GameWorld | null>(null);
   const [timeRemaining, setTimeRemaining] = useState(RUN_DURATION_SECONDS);
   const [clockNow, setClockNow] = useState(Date.now());
@@ -353,6 +444,7 @@ export function GameExperience() {
   const pendingPlacementWorldRef = useRef<GameWorld | null>(null);
   const worldRef = useRef<GameWorld | null>(null);
   const countdownCueRef = useRef<string | null>(null);
+  const pausedQuakeRemainingRef = useRef<number | null>(null);
   const dragOffset = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
   const placementImpact = useRef(new Animated.Value(0)).current;
   const placementFlightProgress = useRef(new Animated.Value(0)).current;
@@ -360,7 +452,7 @@ export function GameExperience() {
   const boardPulse = useRef(new Animated.Value(0)).current;
   const boardShake = useRef(new Animated.Value(0)).current;
   const timerFlash = useRef(new Animated.Value(0)).current;
-  const lastFreshParamRef = useRef<string | null>(freshParam ?? null);
+  const lastFreshParamRef = useRef<string | null>(null);
   const isDesktop = device.width >= 960;
   const isMobile = !isDesktop;
   const isPortraitMobile = isMobile && !device.isLandscape;
@@ -389,11 +481,15 @@ export function GameExperience() {
   const sideRailWidth = isPortraitMobile
     ? 0
     : clamp(Math.round(frameWidth * (isDesktop ? 0.24 : 0.32)), 164, 260);
-  const boardRail = clamp(
-    Math.round(Math.min(frameWidth, availableHeight) * (isPortraitMobile ? 0.08 : 0.075)),
-    28,
-    42
-  );
+  const isRequestedQuake = selectedMode === "quake";
+  const boardRail = isRequestedQuake
+    ? 0
+    : clamp(
+        Math.round(Math.min(frameWidth, availableHeight) * (isPortraitMobile ? 0.08 : 0.075)),
+        28,
+        42
+      );
+  const boardRailGap = boardRail > 0 ? boardGap : 0;
   const boardWidthBudget = frameWidth - framePad * 2 - boardPadX * 2;
   const boardHeightBudget = isPortraitMobile
     ? availableHeight -
@@ -412,14 +508,14 @@ export function GameExperience() {
     isPortraitMobile ? 28 : 24,
     Math.floor(
       Math.min(
-        (boardWidthBudget - boardRail - boardGap * 5) / GRID_SIZE,
-        (boardHeightBudget - boardRail - boardGap * 5) / GRID_SIZE
+        (boardWidthBudget - boardRail - boardRailGap - boardGap * (GRID_SIZE - 1)) / GRID_SIZE,
+        (boardHeightBudget - boardRail - boardRailGap - boardGap * (GRID_SIZE - 1)) / GRID_SIZE
       )
     )
   );
   const boardDense = boardCell < 56;
   const matrixSize = boardCell * GRID_SIZE + boardGap * (GRID_SIZE - 1);
-  const boardSize = boardRail + boardGap + matrixSize;
+  const boardSize = boardRail + boardRailGap + matrixSize;
   const boardPanelHeight = boardSize + boardPadY * 2;
   const boardPanelWidth = boardSize + boardPadX * 2;
   const portraitFrameHeight = Math.min(
@@ -458,7 +554,9 @@ export function GameExperience() {
   const queueTileWidth = portraitQueueTileWidth;
   const queueTileHeight = portraitQueueTileHeight;
   const currentWorld = world;
-  const queue = currentWorld?.queue ?? [];
+  const isQuakeMode = currentWorld?.mode === "quake" || selectedMode === "quake";
+  const quakeHolding = currentWorld?.mode === "quake" ? currentWorld.quake?.holding ?? [] : [];
+  const queue = currentWorld?.mode === "quake" ? quakeHolding : currentWorld?.queue ?? [];
   const board = currentWorld?.board ?? EMPTY_BOARD;
   const rowLines = currentWorld?.rowLines ?? EMPTY_LINES;
   const columnLines = currentWorld?.columnLines ?? EMPTY_LINES;
@@ -469,14 +567,11 @@ export function GameExperience() {
   const motionLocked = queueAnimating || placementAnimating;
   const interactionLocked = motionLocked || Boolean(pendingSpecialMove);
   const preview =
-    currentWorld && hoveredCell && leadTile?.kind === "standard"
+    currentWorld?.mode !== "quake" && currentWorld && hoveredCell && leadTile?.kind === "standard"
       ? previewPlacement(currentWorld, hoveredCell.row, hoveredCell.col)
       : null;
   const selectedFreeGamesRemaining = dailyFreeGames[selectedDifficulty] ?? 0;
-  const canAffordDifficulty = (difficulty: SetupDifficulty) =>
-    status !== "authenticated" ||
-    (dailyFreeGames[difficulty] ?? 0) > 0 ||
-    (Number(profile?.nChips) || 0) >= STACKEM_EXTRA_GAME_COST;
+  const canAffordDifficulty = (_difficulty: SetupDifficulty) => true;
   const canAfford = canAffordDifficulty(selectedDifficulty);
   const selectedDifficultyOption =
     DIFFICULTY_OPTIONS.find((option) => option.key === selectedDifficulty) ??
@@ -491,7 +586,7 @@ export function GameExperience() {
   }, [currentWorld?.status, profile?.nChips, requestedBuyIn]);
 
   useEffect(() => {
-    if (currentWorld?.status !== "playing" || currentWorld.result) {
+    if (currentWorld?.status !== "playing" || currentWorld.mode === "quake" || currentWorld.result) {
       return;
     }
 
@@ -531,10 +626,84 @@ export function GameExperience() {
     }, 1000);
 
     return () => clearInterval(interval);
-  }, [currentWorld?.result, currentWorld?.status, timeRemaining]);
+  }, [currentWorld?.mode, currentWorld?.result, currentWorld?.status, timeRemaining]);
 
   useEffect(() => {
-    if (currentWorld?.status !== "playing" || currentWorld.result) {
+    if (currentWorld?.status !== "playing" || currentWorld.mode !== "quake" || currentWorld.result) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      if (menuOpen) {
+        return;
+      }
+
+      const now = Date.now();
+      let quakeTriggered = false;
+
+      setClockNow(now);
+      setWorld((previous) => {
+        if (
+          previous?.mode !== "quake" ||
+          previous.status !== "playing" ||
+          previous.result ||
+          !previous.quake ||
+          previous.quake.nextQuakeAt > now
+        ) {
+          return previous;
+        }
+
+        quakeTriggered = true;
+        return triggerQuake(previous, now);
+      });
+
+      if (quakeTriggered) {
+        playQuakeShake();
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [currentWorld?.mode, currentWorld?.result, currentWorld?.status, menuOpen]);
+
+  useEffect(() => {
+    const activeWorld = worldRef.current;
+
+    if (activeWorld?.mode !== "quake" || activeWorld.status !== "playing" || activeWorld.result) {
+      pausedQuakeRemainingRef.current = null;
+      return;
+    }
+
+    if (menuOpen) {
+      pausedQuakeRemainingRef.current = Math.max(0, activeWorld.quake!.nextQuakeAt - Date.now());
+      return;
+    }
+
+    const pausedRemaining = pausedQuakeRemainingRef.current;
+
+    if (pausedRemaining === null) {
+      return;
+    }
+
+    pausedQuakeRemainingRef.current = null;
+    const resumedAt = Date.now();
+    setClockNow(resumedAt);
+    setWorld((previous) => {
+      if (previous?.mode !== "quake" || previous.status !== "playing" || previous.result || !previous.quake) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        quake: {
+          ...previous.quake,
+          nextQuakeAt: resumedAt + pausedRemaining
+        }
+      };
+    });
+  }, [menuOpen]);
+
+  useEffect(() => {
+    if (currentWorld?.status !== "playing" || currentWorld.mode === "quake" || currentWorld.result) {
       return;
     }
 
@@ -565,7 +734,7 @@ export function GameExperience() {
         setCountdownCue((current) => (current === nextCue ? null : current));
       }
     });
-  }, [currentWorld?.result, currentWorld?.status, timeRemaining, timerFlash]);
+  }, [currentWorld?.mode, currentWorld?.result, currentWorld?.status, timeRemaining, timerFlash]);
 
   useEffect(() => {
     if (currentWorld?.result?.reason !== "timeout") {
@@ -621,8 +790,21 @@ export function GameExperience() {
     currentWorld?.bustPenalty ??
     calculateBustPenalty(currentBuyIn, selectedDifficultyOption.bustPenalty);
   const currentScoreLabel = formatChipCount(currentWorld?.score ?? 0);
-  const timerDisplay = countdownCue ?? formatTimerLabel(timeRemaining);
-  const timerProgress = Math.max(0, Math.min(1, timeRemaining / RUN_DURATION_SECONDS));
+  const quakeSecondsUntilNext =
+    currentWorld?.mode === "quake" && currentWorld.quake
+      ? Math.max(0, Math.ceil((currentWorld.quake.nextQuakeAt - clockNow) / 1000))
+      : 0;
+  const timerDisplay =
+    currentWorld?.mode === "quake"
+      ? formatTimerLabel(quakeSecondsUntilNext)
+      : countdownCue ?? formatTimerLabel(timeRemaining);
+  const timerProgress =
+    currentWorld?.mode === "quake" && currentWorld.quake
+      ? Math.max(
+          0,
+          Math.min(1, quakeSecondsUntilNext / Math.max(1, currentWorld.quake.quakeIntervalSeconds))
+        )
+      : Math.max(0, Math.min(1, timeRemaining / RUN_DURATION_SECONDS));
   const multiplierActive = multiplierEndsAt > clockNow;
   const multiplierCooldownSeconds = Math.max(
     0,
@@ -1331,7 +1513,38 @@ export function GameExperience() {
     const nextWorld = worldRef.current;
     const tile = nextWorld?.queue[0];
 
-    if (!nextWorld || !tile || interactionLocked) {
+    if (!nextWorld || interactionLocked) {
+      return;
+    }
+
+    if (nextWorld.mode === "quake") {
+      if (!canSelectQuakeTile(nextWorld, row, col)) {
+        return;
+      }
+
+      const selectedWorld = selectQuakeTile(nextWorld, row, col);
+
+      if (selectedWorld === nextWorld) {
+        return;
+      }
+
+      setUndoStack((current) => [...current.slice(-(UNDO_LIMIT * 2)), nextWorld]);
+      setWorld(selectedWorld);
+
+      if (selectedWorld.event === "lock") {
+        setCelebrationBurst({ cols: [], nonce: selectedWorld.eventNonce, rows: [] });
+        void fireHaptic(settings.haptics, "confirm");
+      } else if (selectedWorld.event === "bust") {
+        setWarningBurst({ cols: [], nonce: selectedWorld.eventNonce, rows: [] });
+        void fireHaptic(settings.haptics, "damage");
+      } else {
+        void fireHaptic(settings.haptics, "tap");
+      }
+
+      return;
+    }
+
+    if (!tile) {
       return;
     }
 
@@ -1409,7 +1622,10 @@ export function GameExperience() {
     void fireHaptic(settings.haptics, "tap");
   }
 
-  function buildDifficultyConfig(difficultyKey: SetupDifficulty) {
+  function buildDifficultyConfig(
+    difficultyKey: SetupDifficulty,
+    modeOverride: GameMode = selectedMode
+  ) {
     const option =
       DIFFICULTY_OPTIONS.find((candidate) => candidate.key === difficultyKey) ??
       DIFFICULTY_OPTIONS[0];
@@ -1418,13 +1634,15 @@ export function GameExperience() {
       blackjackBonus: option.blackjackBonus,
       bustPenalty: option.bustPenalty,
       difficulty: option.key,
+      mode: modeOverride,
       openingTiles: option.openingTiles
     };
   }
 
   useEffect(() => {
     setSelectedDifficulty(requestedDifficulty);
-  }, [requestedDifficulty]);
+    setSelectedMode(requestedMode);
+  }, [requestedDifficulty, requestedMode]);
 
   useEffect(() => {
     if (currentWorld) {
@@ -1446,8 +1664,8 @@ export function GameExperience() {
     setTimeRemaining(RUN_DURATION_SECONDS);
     setCountdownCue(null);
     countdownCueRef.current = null;
-    setWorld(createWorld(selectedBuyIn, buildDifficultyConfig(selectedDifficulty)));
-  }, [currentWorld, isReady, selectedBuyIn, selectedDifficulty, status]);
+    setWorld(createWorld(selectedBuyIn, buildDifficultyConfig(selectedDifficulty, selectedMode)));
+  }, [currentWorld, isReady, selectedBuyIn, selectedDifficulty, selectedMode, status]);
 
   useEffect(() => {
     if (!freshParam || lastFreshParamRef.current === freshParam) {
@@ -1482,70 +1700,31 @@ export function GameExperience() {
     countdownCueRef.current = null;
 
     const nextDifficulty: SetupDifficulty = requestedDifficulty;
+    const nextMode: GameMode = requestedMode;
     const nextBuyIn = getSessionBankroll(profile?.nChips);
 
     setSelectedDifficulty(nextDifficulty);
+    setSelectedMode(nextMode);
     setSelectedBuyIn(nextBuyIn);
     setWorld(null);
-    void startRun(nextDifficulty, nextBuyIn);
-  }, [freshParam, isReady, profile?.nChips, requestedDifficulty, status, token]);
+    void startRun(nextDifficulty, nextBuyIn, nextMode);
+  }, [freshParam, isReady, profile?.nChips, requestedDifficulty, requestedMode, status, token]);
 
   async function startRun(
     difficultyOverride: SetupDifficulty = selectedDifficulty,
-    buyInOverride = selectedBuyIn
+    buyInOverride = selectedBuyIn,
+    modeOverride: GameMode = selectedMode
   ) {
     if (!canAffordDifficulty(difficultyOverride) || isStartingSession) {
       return;
     }
 
-    let session:
-      | {
-          entryCostCharged: number;
-          freeAttempt: boolean;
-          freeGamesRemaining: number;
-          id: string;
-        }
-      | null = null;
-
-    if (status === "authenticated" && token) {
-      setIsStartingSession(true);
-      setEconomyMessage(null);
-
-      try {
-        const response = await hubStackemApi.startGame(token, difficultyOverride);
-        const data = response.body.data;
-
-        session = {
-          entryCostCharged: data.entryCostCharged,
-          freeAttempt: data.freeAttempt,
-          freeGamesRemaining: data.freeGamesRemaining,
-          id: data.gameSessionId
-        };
-        setDailyFreeGames((current) => ({
-          ...current,
-          [data.difficulty]: data.freeGamesRemaining
-        }));
-        setEconomyMessage(
-          data.entryCostCharged > 0
-            ? "50 chips entry used"
-            : `${data.freeGamesRemaining} free ${data.difficulty} games left today`
-        );
-        await refreshProfile();
-      } catch (error) {
-        const message =
-          error instanceof Error
-            ? error.message
-            : "You need 50 chips to play another Stack'em game";
-
-        setEconomyMessage(message);
-        setIsStartingSession(false);
-        return;
-      }
-
-      setIsStartingSession(false);
-    } else {
-      setEconomyMessage("Local practice game. Sign in for chip rewards.");
-    }
+    setIsStartingSession(false);
+    setEconomyMessage(
+      status === "authenticated"
+        ? "Stack'em run started."
+        : "Local practice game. Sign in for chip rewards."
+    );
 
     resetTransientState();
     setCelebrationBurst(null);
@@ -1562,29 +1741,66 @@ export function GameExperience() {
     setMultiplierReadyAt(0);
     setLightningReadyAt(0);
     setTimeRemaining(RUN_DURATION_SECONDS);
-    setActiveSession(
-      session
-        ? {
-            entryCostCharged: session.entryCostCharged,
-            freeAttempt: session.freeAttempt,
-            id: session.id
-          }
-        : null
-    );
+    setActiveSession(null);
     setCompletedSessionId(null);
     setSelectedDifficulty(difficultyOverride);
-    setWorld(createWorld(buyInOverride, buildDifficultyConfig(difficultyOverride)));
+    setSelectedMode(modeOverride);
+    setWorld(createWorld(buyInOverride, buildDifficultyConfig(difficultyOverride, modeOverride)));
     void fireHaptic(settings.haptics, "confirm");
   }
 
   function restartRun() {
     const difficultyKey = currentWorld?.difficulty ?? selectedDifficulty;
+    const modeKey = currentWorld?.mode ?? selectedMode;
 
-    void startRun(difficultyKey, currentWorld?.buyIn ?? selectedBuyIn);
+    void startRun(difficultyKey, currentWorld?.buyIn ?? selectedBuyIn, modeKey);
   }
 
   function startFreshRun() {
     void startRun();
+  }
+
+  function playQuakeShake() {
+    boardShake.stopAnimation();
+    boardShake.setValue(0);
+    Animated.sequence([
+      Animated.timing(boardShake, {
+        duration: 70,
+        easing: Easing.linear,
+        toValue: 1,
+        useNativeDriver: true
+      }),
+      Animated.timing(boardShake, {
+        duration: 70,
+        easing: Easing.linear,
+        toValue: -1,
+        useNativeDriver: true
+      }),
+      Animated.timing(boardShake, {
+        duration: 70,
+        easing: Easing.linear,
+        toValue: 0,
+        useNativeDriver: true
+      })
+    ]).start();
+  }
+
+  function manualQuake() {
+    const activeWorld = worldRef.current;
+
+    if (activeWorld?.mode !== "quake" || activeWorld.status !== "playing" || activeWorld.result) {
+      return;
+    }
+
+    setWorld((previous) => {
+      if (previous?.mode !== "quake" || previous.status !== "playing" || previous.result) {
+        return previous;
+      }
+
+      return triggerQuake(previous, Date.now());
+    });
+    playQuakeShake();
+    void fireHaptic(settings.haptics, "damage");
   }
 
   function endRun(redirectToLeaderboard = false) {
@@ -1624,7 +1840,7 @@ export function GameExperience() {
   }
 
   function activateMultiplierBoost() {
-    if (!currentWorld || currentWorld.result || multiplierCooldownSeconds > 0) {
+    if (!currentWorld || currentWorld.mode === "quake" || currentWorld.result || multiplierCooldownSeconds > 0) {
       return;
     }
 
@@ -1642,6 +1858,7 @@ export function GameExperience() {
   function activateLightningStrike() {
     if (
       !currentWorld ||
+      currentWorld.mode === "quake" ||
       currentWorld.result ||
       lightningCooldownSeconds > 0 ||
       completedTwentyOnes <= 0
@@ -1694,6 +1911,10 @@ export function GameExperience() {
       return false;
     }
 
+    if (currentWorld.mode === "quake") {
+      return canSelectQuakeTile(currentWorld, row, col);
+    }
+
     return isSwapTile(leadTile)
       ? canSwapAt(currentWorld, row, col)
       : canPlaceAt(currentWorld, row, col);
@@ -1703,34 +1924,66 @@ export function GameExperience() {
     profile?.sUserName ??
     (status === "authenticated" ? "Player" : "Local");
   const playerMode = `${leaderboardRuns} saved runs`;
-  const cardsLeft = String(currentWorld ? getDeckCountLabel(currentWorld) : SHOE_COUNT);
+  const quakeStackTiles =
+    currentWorld?.mode === "quake" && currentWorld.quake
+      ? currentWorld.quake.stacks.reduce(
+          (total, row) => total + row.reduce((rowTotal, stack) => rowTotal + stack.length, 0),
+          0
+        )
+      : 0;
+  const quakeMaxStack =
+    currentWorld?.mode === "quake" && currentWorld.quake
+      ? currentWorld.quake.stacks.reduce(
+          (max, row) => Math.max(max, ...row.map((stack) => stack.length)),
+          0
+        )
+      : 0;
+  const cardsLeft = String(
+    currentWorld?.mode === "quake"
+      ? quakeStackTiles
+      : currentWorld
+        ? getDeckCountLabel(currentWorld)
+        : SHOE_COUNT
+  );
   const activeCelebrationRows = celebrationBurst?.rows ?? [];
   const activeCelebrationCols = celebrationBurst?.cols ?? [];
   const activeLightningTargets = lightningAnimation?.targetKeys ?? [];
   const activeLightningFrame = lightningAnimation ? LIGHTNING_STRIKE_GIF : null;
   const activeWarningRows = warningBurst?.rows ?? [];
   const activeWarningCols = warningBurst?.cols ?? [];
-  const bustedRows = rowLines
-    .filter((line) => line.total > TARGET_TOTAL)
-    .map((line) => line.index);
-  const bustedCols = columnLines
-    .filter((line) => line.total > TARGET_TOTAL)
-    .map((line) => line.index);
+  const bustedRows = isQuakeMode
+    ? []
+    : rowLines
+        .filter((line) => line.total > TARGET_TOTAL)
+        .map((line) => line.index);
+  const bustedCols = isQuakeMode
+    ? []
+    : columnLines
+        .filter((line) => line.total > TARGET_TOTAL)
+        .map((line) => line.index);
   const activeBustedRows = Array.from(new Set([...bustedRows, ...activeWarningRows]));
   const activeBustedCols = Array.from(new Set([...bustedCols, ...activeWarningCols]));
   const burstRows = activeBustedRows;
   const burstCols = activeBustedCols;
   const effectsKind = celebrationBurst ? "celebrate" : warningBurst ? "warning" : null;
-  const bannerRules = [
-    { label: "Bank", value: formatChipCount(currentBuyIn) },
-    { label: "21", value: `+${formatChipCount(currentBlackjackBonus)}` },
-    {
-      label: "Free",
-      value: `${dailyFreeGames[currentWorld?.difficulty ?? selectedDifficulty] ?? 0}`
-    },
-    { label: "Bust", value: `-${formatChipCount(currentBustPenalty)}` },
-    { label: "Timer", value: formatTimerLabel(timeRemaining) }
-  ];
+  const bannerRules =
+    currentWorld?.mode === "quake"
+      ? [
+          { label: "Mode", value: "Quake" },
+          { label: "Hold", value: String(currentWorld.quake?.selectedTotal ?? 0) },
+          { label: "Stack", value: `${quakeMaxStack}/10` },
+          { label: "Tiles", value: cardsLeft }
+        ]
+      : [
+          { label: "Mode", value: "Classic" },
+          { label: "21", value: `+${formatChipCount(currentBlackjackBonus)}` },
+          {
+            label: "Free",
+            value: `${dailyFreeGames[currentWorld?.difficulty ?? selectedDifficulty] ?? 0}`
+          },
+          { label: "Bust", value: `-${formatChipCount(currentBustPenalty)}` },
+          { label: "Timer", value: formatTimerLabel(timeRemaining) }
+        ];
   const bannerStats = [{ label: "Score", value: currentScoreLabel }];
   const setupWizardTitle = "Choose your difficulty";
   const setupWizardBody =
@@ -2026,13 +2279,73 @@ export function GameExperience() {
     </View>
   ) : null;
   function renderGameBanner(padding: number, compact: boolean) {
+    if (isQuakeMode) {
+      return (
+        <View
+          ref={bannerRef}
+          style={[
+            styles.quakeHud,
+            compact && styles.quakeHudCompact,
+            { borderRadius: radius, minHeight: compact ? topHeight : topHeight, padding }
+          ]}
+        >
+          <View style={styles.quakeHudPlate} />
+          <View style={styles.quakeHudScorePanel}>
+            <Text style={styles.quakeHudLabel}>Score</Text>
+            <Text style={styles.quakeHudScore}>{currentScoreLabel}</Text>
+            <Text style={styles.quakeHudBest}>Best {formatChipCount(leaderboardBest)}</Text>
+          </View>
+
+          <View style={styles.quakeHudTimerPanel}>
+            <Text style={styles.quakeHudLabel}>Next Quake</Text>
+            <Text style={styles.quakeHudTimer}>{timerDisplay}</Text>
+            <View style={styles.quakeHudProgressTrack}>
+              {Array.from({ length: 6 }, (_, index) => (
+                <View
+                  key={`quake-timer-segment-${index}`}
+                  style={[
+                    styles.quakeHudProgressSegment,
+                    index / 6 < timerProgress && styles.quakeHudProgressSegmentLit
+                  ]}
+                />
+              ))}
+            </View>
+          </View>
+
+          <View style={styles.quakeHudActions}>
+            {currentWorld ? (
+              <Pressable
+                onPress={() => setMenuOpen((current) => !current)}
+                style={({ pressed }) => [
+                  styles.quakeHudButton,
+                  pressed && styles.quakeHudButtonPressed
+                ]}
+              >
+                <Text style={styles.quakeHudButtonText}>II</Text>
+              </Pressable>
+            ) : null}
+            <Pressable
+              onPress={() => router.replace(stackemRoutes.lobby)}
+              style={({ pressed }) => [
+                styles.quakeHudButton,
+                pressed && styles.quakeHudButtonPressed
+              ]}
+            >
+              <Text style={styles.quakeHudButtonText}>X</Text>
+            </Pressable>
+          </View>
+        </View>
+      );
+    }
+
     return (
       <View
         ref={bannerRef}
         style={[
         styles.strip,
         styles.bannerScoreBar,
-          { borderRadius: radius, minHeight: compact ? topHeight : topHeight, padding }
+          { borderRadius: radius, minHeight: compact ? topHeight : topHeight, padding },
+          isQuakeMode && styles.bannerScoreBarQuake
         ]}
       >
         <View style={styles.bannerHeader}>
@@ -2076,7 +2389,7 @@ export function GameExperience() {
                   { width: `${timerProgress * 100}%` }
                 ]}
               />
-              <Text style={styles.bannerRuleLabel}>Timer</Text>
+              <Text style={styles.bannerRuleLabel}>{isQuakeMode ? "Next Quake" : "Timer"}</Text>
               <Text style={styles.bannerRuleValue}>{timerDisplay}</Text>
             </Animated.View>
             {currentWorld ? (
@@ -2106,8 +2419,13 @@ export function GameExperience() {
   }
 
   function renderQueueUndoTray(tileWidth: number, tileHeight: number, gap: number) {
-    const queueWidth = tileWidth * HAND_SIZE + gap * (HAND_SIZE - 1);
-    const queueWithUndoWidth = queueWidth + gap + tileWidth;
+    const queueSlots = isQuakeMode ? GRID_SIZE : HAND_SIZE;
+    const effectiveTileWidth = isQuakeMode
+      ? boardCell
+      : tileWidth;
+    const effectiveTileHeight = isQuakeMode ? boardCell : tileHeight;
+    const queueWidth = effectiveTileWidth * queueSlots + gap * (queueSlots - 1);
+    const queueWithUndoWidth = isQuakeMode ? queueWidth : queueWidth + gap + effectiveTileWidth;
 
     if (!currentWorld) {
       return (
@@ -2125,10 +2443,10 @@ export function GameExperience() {
             ]}
           >
             <Text style={styles.utilityButtonText}>
-              {isStartingSession ? "Starting" : "Start Game"}
+              {isStartingSession ? "Starting" : isQuakeMode ? "Start Quake" : "Start Game"}
             </Text>
             <Text style={styles.utilityMeta}>
-              {!canAfford ? "Need 50 chips" : "Load waiting tiles"}
+              {!canAfford ? "Need 50 chips" : isQuakeMode ? "Full board" : "Load waiting tiles"}
             </Text>
           </Pressable>
         </View>
@@ -2137,41 +2455,53 @@ export function GameExperience() {
 
     return (
       <View style={[styles.utilityColumn, styles.utilityColumnCentered, { gap, width: queueWithUndoWidth }]}>
+        {currentWorld.mode === "quake" ? (
+          <View style={styles.quakeHoldingMeta}>
+            <Text style={styles.quakeHoldingLabel}>Holding Zone</Text>
+            <Text style={styles.quakeHoldingValue}>
+              Total {currentWorld.quake?.selectedTotal ?? 0} - {5 - (currentWorld.quake?.holding.length ?? 0)} spots left
+            </Text>
+          </View>
+        ) : null}
         <View style={[styles.queueUndoRow, { gap, width: queueWithUndoWidth }]}>
-          <View ref={queueStageRef}>{renderQueue(tileWidth, tileHeight, gap)}</View>
-          <View ref={undoButtonRef}>
+          <View ref={queueStageRef}>{renderQueue(effectiveTileWidth, effectiveTileHeight, gap)}</View>
+          {!isQuakeMode ? (
+            <View ref={undoButtonRef}>
+              <Pressable
+                disabled={!undoAvailable}
+                onPress={undoLastMove}
+                style={({ pressed }) => [
+                  styles.utilityButton,
+                  styles.queueUndoButton,
+                  { height: tileHeight, width: tileWidth },
+                  !undoAvailable && styles.utilityButtonDisabled,
+                  pressed && undoAvailable && styles.utilityButtonPressed
+                ]}
+              >
+                <Text style={styles.utilityGlyph}>{"\u21B6"}</Text>
+                <Text style={styles.utilityMeta}>{undoRemaining}</Text>
+              </Pressable>
+            </View>
+          ) : null}
+        </View>
+        {currentWorld.mode !== "quake" ? (
+          <View style={styles.utilityRow}>
             <Pressable
-              disabled={!undoAvailable}
-              onPress={undoLastMove}
+              disabled={!currentWorld || Boolean(currentWorld.result)}
+              onPress={() => endRun(true)}
               style={({ pressed }) => [
                 styles.utilityButton,
-                styles.queueUndoButton,
-                { height: tileHeight, width: tileWidth },
-                !undoAvailable && styles.utilityButtonDisabled,
-                pressed && undoAvailable && styles.utilityButtonPressed
+                styles.utilityActionButton,
+                styles.utilityButtonFull,
+                (!currentWorld || currentWorld.result) && styles.utilityButtonDisabled,
+                pressed && currentWorld && !currentWorld.result && styles.utilityButtonPressed
               ]}
             >
-              <Text style={styles.utilityGlyph}>{"\u21B6"}</Text>
-              <Text style={styles.utilityMeta}>{undoRemaining}</Text>
+              <Text style={styles.utilityButtonText}>End Game</Text>
+              <Text style={styles.utilityMeta}>Save + leaderboard</Text>
             </Pressable>
           </View>
-        </View>
-        <View style={styles.utilityRow}>
-          <Pressable
-            disabled={!currentWorld || Boolean(currentWorld.result)}
-            onPress={() => endRun(true)}
-            style={({ pressed }) => [
-              styles.utilityButton,
-              styles.utilityActionButton,
-              styles.utilityButtonFull,
-              (!currentWorld || currentWorld.result) && styles.utilityButtonDisabled,
-              pressed && currentWorld && !currentWorld.result && styles.utilityButtonPressed
-            ]}
-          >
-            <Text style={styles.utilityButtonText}>End Game</Text>
-            <Text style={styles.utilityMeta}>Save + leaderboard</Text>
-          </Pressable>
-        </View>
+        ) : null}
       </View>
     );
   }
@@ -2183,10 +2513,30 @@ export function GameExperience() {
     lead: boolean
   ) {
     if (!tile) {
-      return <View style={[styles.emptyTile, { height: tileHeight, width: tileWidth }]} />;
+      const emptyInset = isQuakeMode ? Math.max(5, Math.round(tileWidth * 0.12)) : 0;
+      return (
+        <View style={{ alignItems: "center", height: tileHeight, justifyContent: "center", width: tileWidth }}>
+          <View
+            style={[
+              styles.emptyTile,
+              isQuakeMode && styles.emptyTileQuakeHolding,
+              { height: tileHeight - emptyInset * 2, width: tileWidth - emptyInset * 2 }
+            ]}
+          />
+        </View>
+      );
     }
 
-    return <TileFace compact dense={queueDense} dimmed={!lead} lead={lead} tile={tile} />;
+    return (
+      <TileFace
+        compact
+        dense={queueDense}
+        dimmed={!lead && !isQuakeMode}
+        lead={lead}
+        quake={isQuakeMode}
+        tile={tile}
+      />
+    );
   }
 
   function renderQueueAdvanceOverlay(tileWidth: number, tileHeight: number, gap: number) {
@@ -2280,16 +2630,17 @@ export function GameExperience() {
   }
 
   function renderQueue(tileWidth: number, tileHeight: number, gap: number) {
-    const totalWidth = tileWidth * HAND_SIZE + gap * (HAND_SIZE - 1);
+    const queueSlots = isQuakeMode ? GRID_SIZE : HAND_SIZE;
+    const totalWidth = tileWidth * queueSlots + gap * (queueSlots - 1);
     const hiddenTileIds = new Set<string>();
 
     return (
       <View style={[styles.queueStage, { height: tileHeight, width: totalWidth }]}>
         <View style={[styles.queueRow, { gap }]}>
-          {Array.from({ length: 3 }, (_, index) => {
+          {Array.from({ length: queueSlots }, (_, index) => {
             const tile = queue[index] ?? null;
             const visibleTile = tile && !hiddenTileIds.has(tile.id) ? tile : null;
-            const lead = index === 0;
+            const lead = !isQuakeMode && index === 0;
             const content = renderQueueContent(visibleTile, tileWidth, tileHeight, lead);
 
             if (visibleTile && lead && dragEnabled) {
@@ -2484,66 +2835,80 @@ export function GameExperience() {
             }
           ],
           width: boardPanelWidth
-        }
+        },
+        isQuakeMode && styles.boardStripQuake
       ]}
     >
       {boardBurstLayer}
-      <View style={[styles.boardShell, { gap: boardGap, height: boardSize, width: boardSize }]}>
-        <View style={[styles.axisRow, { gap: boardGap }]}>
-          <View style={{ height: boardRail, width: boardRail }} />
-          <View style={[styles.axisTrack, { gap: boardGap, height: boardRail, width: matrixSize }]}>
-            {columnLines.map((line, index) => (
-              <View key={`c-${index}`} style={{ height: boardRail, width: boardCell }}>
-                <LinePill
-                  busted={activeBustedCols.includes(index)}
-                  celebrating={activeCelebrationCols.includes(index)}
-                  dense={boardDense}
-                  flashValue={
-                    activeCelebrationCols.includes(index) || activeWarningCols.includes(index)
-                      ? lineFlash
-                      : undefined
-                  }
-                  flashVariant={
-                    activeCelebrationCols.includes(index)
-                      ? "celebrate"
-                      : activeWarningCols.includes(index)
-                        ? "warning"
-                        : undefined
-                  }
-                  label={`C${index + 1}`}
-                  line={preview && hoveredCell?.col === index ? preview.column : line}
-                />
-              </View>
-            ))}
-          </View>
+      {isQuakeMode ? (
+        <View pointerEvents="none" style={styles.quakeBoardSurface}>
+          <View style={[styles.quakeBoardCrack, styles.quakeBoardCrackA]} />
+          <View style={[styles.quakeBoardCrack, styles.quakeBoardCrackB]} />
+          <View style={[styles.quakeBoardCrack, styles.quakeBoardCrackC]} />
+          <View style={[styles.quakeBoardGlow, styles.quakeBoardGlowA]} />
+          <View style={[styles.quakeBoardGlow, styles.quakeBoardGlowB]} />
         </View>
+      ) : null}
+      <View style={[styles.boardShell, { gap: boardGap, height: boardSize, width: boardSize }]}>
+        {!isQuakeMode ? (
+          <View style={[styles.axisRow, { gap: boardGap }]}>
+            <View style={{ height: boardRail, width: boardRail }} />
+            <View style={[styles.axisTrack, { gap: boardGap, height: boardRail, width: matrixSize }]}>
+              {columnLines.map((line, index) => (
+                <View key={`c-${index}`} style={{ height: boardRail, width: boardCell }}>
+                  <LinePill
+                    busted={activeBustedCols.includes(index)}
+                    celebrating={activeCelebrationCols.includes(index)}
+                    dense={boardDense}
+                    flashValue={
+                      activeCelebrationCols.includes(index) || activeWarningCols.includes(index)
+                        ? lineFlash
+                        : undefined
+                    }
+                    flashVariant={
+                      activeCelebrationCols.includes(index)
+                        ? "celebrate"
+                        : activeWarningCols.includes(index)
+                          ? "warning"
+                          : undefined
+                    }
+                    label={`C${index + 1}`}
+                    line={preview && hoveredCell?.col === index ? preview.column : line}
+                  />
+                </View>
+              ))}
+            </View>
+          </View>
+        ) : null}
 
         <View style={[styles.boardBody, { gap: boardGap }]}>
-          <View style={[styles.axisColumn, { gap: boardGap, width: boardRail }]}>
-            {rowLines.map((line, index) => (
-              <View key={`r-${index}`} style={{ height: boardCell, width: boardRail }}>
-                <LinePill
-                  busted={activeBustedRows.includes(index)}
-                  celebrating={activeCelebrationRows.includes(index)}
-                  dense={boardDense}
-                  flashValue={
-                    activeCelebrationRows.includes(index) || activeWarningRows.includes(index)
-                      ? lineFlash
-                      : undefined
-                  }
-                  flashVariant={
-                    activeCelebrationRows.includes(index)
-                      ? "celebrate"
-                      : activeWarningRows.includes(index)
-                        ? "warning"
+          {!isQuakeMode ? (
+            <View style={[styles.axisColumn, { gap: boardGap, width: boardRail }]}>
+              {rowLines.map((line, index) => (
+                <View key={`r-${index}`} style={{ height: boardCell, width: boardRail }}>
+                  <LinePill
+                    busted={activeBustedRows.includes(index)}
+                    celebrating={activeCelebrationRows.includes(index)}
+                    dense={boardDense}
+                    flashValue={
+                      activeCelebrationRows.includes(index) || activeWarningRows.includes(index)
+                        ? lineFlash
                         : undefined
-                  }
-                  label={`R${index + 1}`}
-                  line={preview && hoveredCell?.row === index ? preview.row : line}
-                />
-              </View>
-            ))}
-          </View>
+                    }
+                    flashVariant={
+                      activeCelebrationRows.includes(index)
+                        ? "celebrate"
+                        : activeWarningRows.includes(index)
+                          ? "warning"
+                          : undefined
+                    }
+                    label={`R${index + 1}`}
+                    line={preview && hoveredCell?.row === index ? preview.row : line}
+                  />
+                </View>
+              ))}
+            </View>
+          ) : null}
 
           <View
             ref={boardRef}
@@ -2581,7 +2946,9 @@ export function GameExperience() {
                         rowLines[rowIndex].status === "locked" ||
                         columnLines[colIndex].status === "locked"
                       }
+                      mode={currentWorld?.mode}
                       onPress={() => commitPlacement(rowIndex, colIndex)}
+                      stackHeight={currentWorld?.quake?.stacks[rowIndex]?.[colIndex]?.length ?? 0}
                       tile={tile}
                     />
                   </View>
@@ -2601,6 +2968,7 @@ export function GameExperience() {
       style={[
         styles.strip,
         styles.sideCard,
+        isQuakeMode && styles.sideCardQuake,
         {
           borderRadius: radius,
           padding: isPortraitMobile ? framePad : railPad,
@@ -2615,12 +2983,51 @@ export function GameExperience() {
       )}
     </View>
   );
-
+  const manualQuakeButton = isQuakeMode ? (
+    <Pressable
+      disabled={!currentWorld || currentWorld.status !== "playing" || Boolean(currentWorld.result)}
+      onPress={manualQuake}
+      style={({ pressed }) => [
+        styles.manualQuakeButton,
+        (!currentWorld || currentWorld.status !== "playing" || currentWorld.result) &&
+          styles.manualQuakeButtonDisabled,
+        pressed &&
+          currentWorld?.status === "playing" &&
+          !currentWorld.result &&
+          styles.manualQuakeButtonPressed
+      ]}
+    >
+      <Text style={styles.manualQuakeButtonText}>Quake</Text>
+      <Text style={styles.manualQuakeButtonMeta}>Force wave · timer advances</Text>
+    </Pressable>
+  ) : null;
+  const quakeFrameChrome = isQuakeMode ? (
+    <View pointerEvents="none" style={styles.quakeFrameChrome}>
+      <View style={[styles.quakeLavaRail, styles.quakeLavaRailLeft]} />
+      <View style={[styles.quakeLavaRail, styles.quakeLavaRailRight]} />
+      <View style={[styles.quakeLavaGlow, styles.quakeLavaGlowTop]} />
+      <View style={[styles.quakeLavaGlow, styles.quakeLavaGlowBottom]} />
+      <View style={[styles.quakeRockShard, styles.quakeRockShardA]} />
+      <View style={[styles.quakeRockShard, styles.quakeRockShardB]} />
+      <View style={[styles.quakeRockShard, styles.quakeRockShardC]} />
+      <View style={[styles.quakeRockShard, styles.quakeRockShardD]} />
+    </View>
+  ) : null;
   const portraitShell = (
-    <View style={[styles.frame, styles.mobileFrame, styles.gameStackFrame, { gap: frameGap, width: frameWidth }]}>
-      {portraitProfile}
-      <View style={styles.boardWrap}>{boardPanel}</View>
-      {bottomTray}
+    <View
+      style={[
+        styles.frame,
+        styles.mobileFrame,
+        styles.gameStackFrame,
+        isQuakeMode && styles.gameStackFrameQuake,
+        { gap: frameGap, width: frameWidth }
+      ]}
+    >
+      {quakeFrameChrome}
+      <View style={isQuakeMode && styles.quakeContentLayer}>{portraitProfile}</View>
+      <View style={isQuakeMode && styles.quakeContentLayer}>{manualQuakeButton}</View>
+      <View style={[styles.boardWrap, isQuakeMode && styles.quakeContentLayer]}>{boardPanel}</View>
+      <View style={isQuakeMode && styles.quakeContentLayer}>{bottomTray}</View>
     </View>
   );
 
@@ -2629,6 +3036,7 @@ export function GameExperience() {
       style={[
         styles.frame,
         styles.splitFrame,
+        isQuakeMode && styles.gameStackFrameQuake,
         {
           gap: frameGap,
           height: frameHeight,
@@ -2637,16 +3045,18 @@ export function GameExperience() {
         }
       ]}
     >
-      {renderGameBanner(framePad, true)}
-      <View style={styles.boardWrap}>{boardPanel}</View>
-      {bottomTray}
+      {quakeFrameChrome}
+      <View style={isQuakeMode && styles.quakeContentLayer}>{renderGameBanner(framePad, true)}</View>
+      <View style={isQuakeMode && styles.quakeContentLayer}>{manualQuakeButton}</View>
+      <View style={[styles.boardWrap, isQuakeMode && styles.quakeContentLayer]}>{boardPanel}</View>
+      <View style={isQuakeMode && styles.quakeContentLayer}>{bottomTray}</View>
     </View>
   );
 
   if (isMobile) {
     return (
       <StackemAppearanceContext.Provider value={appearance}>
-        <View style={styles.root}>
+        <View style={[styles.root, isQuakeMode && styles.rootQuake]}>
           <AppBackdrop />
           <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.safe}>
             <ScrollView
@@ -2661,11 +3071,11 @@ export function GameExperience() {
               {isPortraitMobile ? portraitShell : splitShell}
             </ScrollView>
           </SafeAreaView>
-          {setupOverlay}
-          {menuOverlay}
-          {specialOverlay}
-          {placementFlightLayer}
-          {dragGhostLayer}
+      {setupOverlay}
+      {menuOverlay}
+      {specialOverlay}
+      {placementFlightLayer}
+      {dragGhostLayer}
         </View>
       </StackemAppearanceContext.Provider>
     );
@@ -2673,7 +3083,7 @@ export function GameExperience() {
 
   return (
     <StackemAppearanceContext.Provider value={appearance}>
-      <View style={styles.root}>
+      <View style={[styles.root, isQuakeMode && styles.rootQuake]}>
         <AppBackdrop />
         <SafeAreaView edges={["top", "bottom", "left", "right"]} style={styles.safe}>
           <View style={[styles.stage, { padding: outerPad }]}>{splitShell}</View>
@@ -2729,11 +3139,13 @@ export function GameExperience() {
                 </View>
               </View>
               <View style={styles.statRow}>
-                <Stat
-                  flashValue={timerFlash}
-                  label="Timer"
-                  value={timerDisplay}
-                />
+                {!isQuakeMode ? (
+                  <Stat
+                    flashValue={timerFlash}
+                    label="Timer"
+                    value={timerDisplay}
+                  />
+                ) : null}
                 <Stat label="Best" value={String(leaderboardBest)} />
                 <Stat label="Bank" value={formatChipCount(currentBuyIn)} />
               </View>
@@ -2759,37 +3171,41 @@ export function GameExperience() {
               ]}
             >
               <View style={[styles.boardShell, { gap: boardGap, height: boardSize, width: boardSize }]}>
-                <View style={[styles.axisRow, { gap: boardGap }]}>
-                  <View style={{ height: boardRail, width: boardRail }} />
-                  <View
-                    style={[styles.axisTrack, { gap: boardGap, height: boardRail, width: matrixSize }]}
-                  >
-                    {columnLines.map((line, index) => (
-                      <View key={`c-${index}`} style={{ height: boardRail, width: boardCell }}>
-                        <LinePill
-                          busted={activeBustedCols.includes(index)}
-                          dense={boardDense}
-                          label={`C${index + 1}`}
-                          line={preview && hoveredCell?.col === index ? preview.column : line}
-                        />
-                      </View>
-                    ))}
+                {!isQuakeMode ? (
+                  <View style={[styles.axisRow, { gap: boardGap }]}>
+                    <View style={{ height: boardRail, width: boardRail }} />
+                    <View
+                      style={[styles.axisTrack, { gap: boardGap, height: boardRail, width: matrixSize }]}
+                    >
+                      {columnLines.map((line, index) => (
+                        <View key={`c-${index}`} style={{ height: boardRail, width: boardCell }}>
+                          <LinePill
+                            busted={activeBustedCols.includes(index)}
+                            dense={boardDense}
+                            label={`C${index + 1}`}
+                            line={preview && hoveredCell?.col === index ? preview.column : line}
+                          />
+                        </View>
+                      ))}
+                    </View>
                   </View>
-                </View>
+                ) : null}
 
                 <View style={[styles.boardBody, { gap: boardGap }]}>
-                  <View style={[styles.axisColumn, { gap: boardGap, width: boardRail }]}>
-                    {rowLines.map((line, index) => (
-                      <View key={`r-${index}`} style={{ height: boardCell, width: boardRail }}>
-                        <LinePill
-                          busted={activeBustedRows.includes(index)}
-                          dense={boardDense}
-                          label={`R${index + 1}`}
-                          line={preview && hoveredCell?.row === index ? preview.row : line}
-                        />
-                      </View>
-                    ))}
-                  </View>
+                  {!isQuakeMode ? (
+                    <View style={[styles.axisColumn, { gap: boardGap, width: boardRail }]}>
+                      {rowLines.map((line, index) => (
+                        <View key={`r-${index}`} style={{ height: boardCell, width: boardRail }}>
+                          <LinePill
+                            busted={activeBustedRows.includes(index)}
+                            dense={boardDense}
+                            label={`R${index + 1}`}
+                            line={preview && hoveredCell?.row === index ? preview.row : line}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  ) : null}
 
                   <View
                     ref={boardRef}
@@ -2818,7 +3234,9 @@ export function GameExperience() {
                                 rowLines[rowIndex].status === "locked" ||
                                 columnLines[colIndex].status === "locked"
                               }
+                              mode={currentWorld?.mode}
                               onPress={() => commitPlacement(rowIndex, colIndex)}
+                              stackHeight={currentWorld?.quake?.stacks[rowIndex]?.[colIndex]?.length ?? 0}
                               tile={tile}
                             />
                           </View>
@@ -2855,7 +3273,7 @@ export function GameExperience() {
                       !canAfford
                         ? "Need 50 chips"
                         : selectedBuyIn > 0
-                        ? `${cardsLeft} cards · ${formatTimerLabel(timeRemaining)}`
+                        ? `${cardsLeft} cards · ${timerDisplay}`
                         : "No bankroll loaded"
                     }
                     subtitleStyle={styles.actionSubtitle}
@@ -3082,7 +3500,9 @@ function BoardCell({
   lightningFrame,
   lightningStriking,
   locked,
+  mode = "classic",
   onPress,
+  stackHeight = 0,
   tile
 }: {
   busted?: boolean;
@@ -3094,7 +3514,9 @@ function BoardCell({
   lightningFrame?: typeof LIGHTNING_STRIKE_GIF | null;
   lightningStriking?: boolean;
   locked?: boolean;
+  mode?: GameMode;
   onPress: () => void;
+  stackHeight?: number;
   tile: StackTile | null;
 }) {
   const appearance = useStackemAppearance();
@@ -3114,7 +3536,12 @@ function BoardCell({
         {
           backgroundColor: appearance.cellBackground,
           borderColor: canPlace ? appearance.cellPlayableBorder : appearance.cellBorder
-        }
+        },
+        mode === "quake" && styles.cellQuakeBase,
+        mode === "quake" && stackHeight >= 1 && styles.cellQuakeStack,
+        mode === "quake" && stackHeight >= 4 && styles.cellQuakeStackMedium,
+        mode === "quake" && stackHeight >= 7 && styles.cellQuakeStackHigh,
+        mode === "quake" && stackHeight >= 9 && styles.cellQuakeStackCritical
       ]}
     >
       <Animated.View
@@ -3135,7 +3562,14 @@ function BoardCell({
         ]}
       >
         {tile ? (
-          <TileFace compact dense={dense} locked={locked} tile={tile} />
+          <TileFace
+            compact
+            dense={dense}
+            locked={locked}
+            quake={mode === "quake"}
+            stackHeight={stackHeight}
+            tile={tile}
+          />
         ) : (
           <View
             style={[
@@ -3175,6 +3609,8 @@ function TileFace({
   dimmed = false,
   lead = false,
   locked = false,
+  quake = false,
+  stackHeight = 1,
   tile
 }: {
   compact?: boolean;
@@ -3182,10 +3618,13 @@ function TileFace({
   dimmed?: boolean;
   lead?: boolean;
   locked?: boolean;
+  quake?: boolean;
+  stackHeight?: number;
   tile: StackTile;
 }) {
   const appearance = useStackemAppearance();
   const pulseAnim = useRef(new Animated.Value(0)).current;
+  const spawnAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (tile.kind === "standard" && tile.rank === "2" && locked) {
@@ -3203,12 +3642,41 @@ function TileFace({
     }
     return () => { pulseAnim.stopAnimation(); };
   }, [tile.kind, tile.rank, locked, pulseAnim]);
+
+  useEffect(() => {
+    spawnAnim.stopAnimation();
+    spawnAnim.setValue(0);
+    Animated.spring(spawnAnim, {
+      bounciness: 10,
+      speed: 18,
+      toValue: 1,
+      useNativeDriver: true
+    }).start();
+  }, [spawnAnim, tile.id]);
+
   const isSpecial = tile.kind !== "standard";
   const specialLabel = tile.kind === "wild" ? "W" : tile.kind === "swap" ? "S" : tile.rank;
   const specialMeta = tile.kind === "wild" ? "WILD" : tile.kind === "swap" ? "SWAP" : "";
+  const blockSurface = getBlockTileSurface(tile);
+  const blockText = getBlockTileTextColor(tile);
+  const quakeTileColor = getQuakeTileColor(tile);
+  const quakeText = "#ffffff";
+  const spawnScale = spawnAnim.interpolate({
+    inputRange: [0, 0.55, 1],
+    outputRange: [0.86, 1.08, 1]
+  });
+  const spawnLift = spawnAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [8, 0]
+  });
+  const visibleDepthLayers = quake ? Math.min(Math.max(stackHeight - 1, 0), 9) : 0;
+  const quakeLayerDepth = 7;
+  const quakeStackLift = quake
+    ? -Math.min(visibleDepthLayers * quakeLayerDepth, 63)
+    : 0;
 
   return (
-    <View
+    <Animated.View
       style={[
         styles.tile,
         locked && styles.tileLocked,
@@ -3216,36 +3684,77 @@ function TileFace({
         compact && styles.tileCompact,
         dense && styles.tileDense,
         dimmed && styles.tileDimmed,
-        lead && styles.tileLead
+        lead && styles.tileLead,
+        quake && styles.tileQuake,
+        quake && stackHeight >= 7 && styles.tileQuakeDanger,
+        { transform: [{ translateY: quakeStackLift }, { translateY: spawnLift }, { scale: spawnScale }] }
       ]}
     >
-      <View style={styles.tileShadow} />
-      <View style={styles.tileDepth} />
-      <LinearGradient
-        colors={appearance.tileSurface}
-        end={{ x: 1, y: 1 }}
-        start={{ x: 0, y: 0 }}
-        style={styles.tileSurface}
-      />
-      <LinearGradient
-        colors={appearance.tileGloss}
-        end={{ x: 0.82, y: 1 }}
-        start={{ x: 0.12, y: 0 }}
-        style={styles.tileGloss}
-      />
-      <View style={styles.tileInset} />
-      <View style={styles.tileTopRim} />
-      <View style={styles.tileLeftRim} />
-      <View style={[styles.tileCoreGlow, { backgroundColor: appearance.tileCoreGlow }]} />
-      <View style={styles.tileCenter}>
-        <View style={styles.tileMiniPip} />
+      {quake && visibleDepthLayers > 0 ? (
+        <>
+          {Array.from({ length: visibleDepthLayers }, (_, index) => (
+            <View
+              key={`quake-depth-${index}`}
+              style={[
+                styles.tileQuakeImageLayer,
+                {
+                  backgroundColor: quakeTileColor,
+                  opacity: 0.72 + index * 0.025,
+                  transform: [
+                    {
+                      translateY: (visibleDepthLayers - index) * quakeLayerDepth
+                    }
+                  ]
+                }
+              ]}
+            >
+              <Image
+                resizeMode="stretch"
+                source={QUAKE_TILE_IMAGE}
+                style={styles.tileQuakeLayerImage}
+              />
+            </View>
+          ))}
+        </>
+      ) : null}
+      {quake ? (
+        <View
+          style={[
+            styles.tileSurface,
+            styles.tileSurfaceQuake,
+            stackHeight <= 1 && styles.tileSurfaceQuakeFlat,
+            { backgroundColor: quakeTileColor }
+          ]}
+        >
+          <Image
+            resizeMode="stretch"
+            source={QUAKE_TILE_IMAGE}
+            style={styles.tileQuakeImage}
+          />
+        </View>
+      ) : (
+        <LinearGradient
+          colors={blockSurface}
+          end={{ x: 1, y: 1 }}
+          start={{ x: 0, y: 0 }}
+          style={styles.tileSurface}
+        />
+      )}
+      <View
+        style={[
+          styles.tileCenter,
+          quake && styles.tileCenterQuake,
+          quake && stackHeight <= 1 && styles.tileCenterQuakeFlat
+        ]}
+      >
         <Text
           style={[
             styles.tileRank,
             isSpecial && styles.tileRankSpecial,
             compact && styles.tileRankCompact,
             dense && styles.tileRankDense,
-            { color: appearance.tileRank }
+            quake && styles.tileRankQuake,
+            { color: quake ? quakeText : blockText }
           ]}
         >
           {specialLabel}
@@ -3258,7 +3767,7 @@ function TileFace({
           style={[styles.tileLockPulse, { opacity: pulseAnim }]}
         />
       ) : null}
-    </View>
+    </Animated.View>
   );
 }
 
@@ -3317,6 +3826,143 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.16,
     shadowRadius: 18
+  },
+  bannerScoreBarQuake: {
+    backgroundColor: "rgba(14, 21, 70, 0.98)",
+    borderColor: "rgba(255, 212, 0, 0.78)",
+    shadowColor: "#00b8d9",
+    shadowOpacity: 0.32,
+    shadowRadius: 24
+  },
+  quakeHud: {
+    alignItems: "center",
+    backgroundColor: "rgba(9, 10, 14, 0.98)",
+    borderColor: "rgba(255, 112, 24, 0.72)",
+    borderWidth: 2,
+    flexDirection: "row",
+    gap: theme.spacing.sm,
+    justifyContent: "space-between",
+    overflow: "hidden",
+    position: "relative",
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.34,
+    shadowRadius: 22
+  },
+  quakeHudCompact: {
+    gap: theme.spacing.xs
+  },
+  quakeHudPlate: {
+    backgroundColor: "rgba(255, 255, 255, 0.05)",
+    borderBottomColor: "rgba(0, 0, 0, 0.42)",
+    borderBottomWidth: 2,
+    height: "42%",
+    left: 0,
+    position: "absolute",
+    right: 0,
+    top: 0
+  },
+  quakeHudScorePanel: {
+    alignItems: "center",
+    backgroundColor: "rgba(2, 3, 6, 0.82)",
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    borderWidth: 1,
+    flex: 0.9,
+    gap: 2,
+    justifyContent: "center",
+    minWidth: 92,
+    paddingHorizontal: theme.spacing.xs,
+    paddingVertical: theme.spacing.xs
+  },
+  quakeHudTimerPanel: {
+    alignItems: "center",
+    backgroundColor: "rgba(10, 2, 2, 0.9)",
+    borderColor: "rgba(255, 48, 16, 0.86)",
+    borderWidth: 2,
+    flex: 1.25,
+    gap: 2,
+    justifyContent: "center",
+    minWidth: 124,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: theme.spacing.xs,
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.48,
+    shadowRadius: 12
+  },
+  quakeHudActions: {
+    alignItems: "center",
+    flexDirection: "row",
+    gap: theme.spacing.xs,
+    justifyContent: "flex-end"
+  },
+  quakeHudButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(18, 18, 22, 0.96)",
+    borderColor: "rgba(255, 124, 24, 0.68)",
+    borderWidth: 2,
+    height: 42,
+    justifyContent: "center",
+    shadowColor: "#ff7a00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.34,
+    shadowRadius: 10,
+    width: 42
+  },
+  quakeHudButtonPressed: {
+    backgroundColor: "rgba(255, 90, 20, 0.26)"
+  },
+  quakeHudButtonText: {
+    color: "#ffb02e",
+    fontFamily: theme.fonts.display,
+    fontSize: 24,
+    lineHeight: 24
+  },
+  quakeHudLabel: {
+    color: "#fff2dd",
+    fontFamily: theme.fonts.label,
+    fontSize: 10,
+    letterSpacing: 1.4,
+    textTransform: "uppercase"
+  },
+  quakeHudScore: {
+    color: "#ffb02e",
+    fontFamily: theme.fonts.display,
+    fontSize: 26,
+    lineHeight: 26,
+    textShadowColor: "rgba(255, 80, 0, 0.72)",
+    textShadowOffset: { height: 0, width: 0 },
+    textShadowRadius: 8
+  },
+  quakeHudBest: {
+    color: "#f8ead9",
+    fontFamily: theme.fonts.bodyBold,
+    fontSize: 11
+  },
+  quakeHudTimer: {
+    color: "#ffb02e",
+    fontFamily: theme.fonts.display,
+    fontSize: 28,
+    lineHeight: 28,
+    textShadowColor: "rgba(255, 70, 0, 0.9)",
+    textShadowOffset: { height: 0, width: 0 },
+    textShadowRadius: 10
+  },
+  quakeHudProgressTrack: {
+    flexDirection: "row",
+    gap: 3,
+    width: "100%"
+  },
+  quakeHudProgressSegment: {
+    backgroundColor: "rgba(52, 26, 18, 0.92)",
+    borderColor: "rgba(255, 122, 0, 0.28)",
+    borderWidth: 1,
+    flex: 1,
+    height: 8
+  },
+  quakeHudProgressSegmentLit: {
+    backgroundColor: "#ff7a00",
+    borderColor: "#ffd400"
   },
   bannerCopy: {
     flex: 1,
@@ -3622,17 +4268,82 @@ const styles = StyleSheet.create({
     fontSize: 26,
     lineHeight: 26
   },
-  boardBody: { flexDirection: "row" },
-  boardShell: { alignItems: "center", justifyContent: "center" },
+  boardBody: { flexDirection: "row", overflow: "visible" },
+  boardShell: { alignItems: "center", justifyContent: "center", overflow: "visible" },
   boardStrip: {
     alignSelf: "center",
     justifyContent: "center",
-    overflow: "hidden",
+    overflow: "visible",
     position: "relative",
     shadowColor: "#7ecbff",
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.16,
     shadowRadius: 22
+  },
+  boardStripQuake: {
+    backgroundColor: "rgba(16, 15, 16, 0.98)",
+    borderColor: "rgba(255, 92, 18, 0.62)",
+    shadowColor: "#ff3b00",
+    shadowOpacity: 0.36,
+    shadowRadius: 32
+  },
+  quakeBoardSurface: {
+    backgroundColor: "rgba(13, 14, 15, 0.96)",
+    borderColor: "rgba(255, 122, 0, 0.2)",
+    borderWidth: 1,
+    bottom: 8,
+    left: 8,
+    overflow: "hidden",
+    position: "absolute",
+    right: 8,
+    top: 8
+  },
+  quakeBoardCrack: {
+    backgroundColor: "#ff5a00",
+    height: 2,
+    opacity: 0.7,
+    position: "absolute",
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.9,
+    shadowRadius: 8
+  },
+  quakeBoardCrackA: {
+    left: "-8%",
+    top: "22%",
+    transform: [{ rotate: "18deg" }],
+    width: "72%"
+  },
+  quakeBoardCrackB: {
+    right: "-10%",
+    top: "58%",
+    transform: [{ rotate: "-24deg" }],
+    width: "82%"
+  },
+  quakeBoardCrackC: {
+    left: "18%",
+    top: "82%",
+    transform: [{ rotate: "7deg" }],
+    width: "58%"
+  },
+  quakeBoardGlow: {
+    backgroundColor: "rgba(255, 80, 0, 0.2)",
+    borderRadius: 999,
+    height: 110,
+    position: "absolute",
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.8,
+    shadowRadius: 34,
+    width: 110
+  },
+  quakeBoardGlowA: {
+    left: -50,
+    top: -42
+  },
+  quakeBoardGlowB: {
+    bottom: -48,
+    right: -44
   },
   lineBurstBand: {
     borderRadius: theme.radius.lg,
@@ -3687,8 +4398,8 @@ const styles = StyleSheet.create({
   buyInTextSelected: { color: "#050505" },
   cell: {
     alignItems: "center",
-    backgroundColor: "rgba(12, 40, 62, 0.74)",
-    borderColor: "rgba(117, 167, 206, 0.24)",
+    backgroundColor: "rgba(20, 28, 48, 0.94)",
+    borderColor: "rgba(255, 255, 255, 0.12)",
     borderRadius: 12,
     borderWidth: 1,
     height: "100%",
@@ -3697,10 +4408,29 @@ const styles = StyleSheet.create({
     padding: 4,
     width: "100%"
   },
+  cellQuakeBase: {
+    backgroundColor: "rgba(22, 22, 24, 0.96)",
+    borderBottomColor: "rgba(0, 0, 0, 0.58)",
+    borderColor: "rgba(102, 92, 84, 0.72)",
+    borderLeftColor: "rgba(255, 255, 255, 0.08)",
+    borderRightColor: "rgba(0, 0, 0, 0.38)",
+    borderTopColor: "rgba(255, 255, 255, 0.12)",
+    borderWidth: 2,
+    shadowColor: "#000000",
+    shadowOffset: { height: 4, width: 0 },
+    shadowOpacity: 0.36,
+    shadowRadius: 5
+  },
   cellBusted: { backgroundColor: "rgba(255, 143, 143, 0.14)", borderColor: "rgba(255, 143, 143, 0.36)" },
-  cellContent: { alignItems: "center", height: "100%", justifyContent: "center", width: "100%" },
+  cellContent: {
+    alignItems: "center",
+    height: "100%",
+    justifyContent: "center",
+    overflow: "visible",
+    width: "100%"
+  },
   cellDense: { padding: 2 },
-  cellHovered: { backgroundColor: "rgba(34, 82, 118, 0.72)", borderColor: "rgba(158, 223, 255, 0.72)" },
+  cellHovered: { backgroundColor: "rgba(42, 52, 82, 0.96)", borderColor: "rgba(255, 176, 46, 0.82)" },
   cellLightningGlow: {
     backgroundColor: "rgba(168, 233, 255, 0.34)",
     borderRadius: 999,
@@ -3733,13 +4463,42 @@ const styles = StyleSheet.create({
     top: -284,
     zIndex: 6
   },
-  cellLastPlaced: { borderColor: "#9edfff" },
+  cellLastPlaced: { borderColor: "#ffb02e" },
   cellLocked: {
-    backgroundColor: "rgba(95, 167, 231, 0.2)",
-    borderColor: "rgba(158, 223, 255, 0.56)"
+    backgroundColor: "rgba(34, 197, 94, 0.18)",
+    borderColor: "rgba(74, 222, 128, 0.74)"
   },
-  cellPlayable: { borderColor: "rgba(158, 223, 255, 0.5)" },
+  cellPlayable: { borderColor: "rgba(255, 176, 46, 0.58)" },
   cellPressed: { opacity: 0.86 },
+  cellQuakeStack: {
+    backgroundColor: "rgba(30, 27, 23, 0.98)",
+    borderColor: "rgba(255, 122, 0, 0.42)",
+    shadowColor: "#ff7a00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.22,
+    shadowRadius: 10
+  },
+  cellQuakeStackCritical: {
+    backgroundColor: "rgba(86, 13, 10, 0.98)",
+    borderColor: "rgba(255, 31, 31, 0.9)",
+    shadowColor: "#ff1f1f",
+    shadowOpacity: 0.84,
+    shadowRadius: 22
+  },
+  cellQuakeStackHigh: {
+    backgroundColor: "rgba(86, 43, 10, 0.98)",
+    borderColor: "rgba(255, 160, 32, 0.82)",
+    shadowColor: "#ff7a00",
+    shadowOpacity: 0.62,
+    shadowRadius: 18
+  },
+  cellQuakeStackMedium: {
+    backgroundColor: "rgba(53, 42, 20, 0.98)",
+    borderColor: "rgba(255, 212, 0, 0.62)",
+    shadowColor: "#ffd400",
+    shadowOpacity: 0.4,
+    shadowRadius: 14
+  },
   cellVoid: {
     backgroundColor: "rgba(4, 17, 29, 0.42)",
     borderColor: "rgba(118, 169, 207, 0.2)",
@@ -3801,6 +4560,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     justifyContent: "center"
   },
+  emptyTileQuakeHolding: {
+    backgroundColor: "rgba(0, 184, 217, 0.12)",
+    borderColor: "rgba(255, 212, 0, 0.34)",
+    borderRadius: 4
+  },
   emptyTileText: {
     color: theme.colors.subtleText,
     fontFamily: theme.fonts.label,
@@ -3814,6 +4578,99 @@ const styles = StyleSheet.create({
     borderRadius: 28,
     borderWidth: 1,
     padding: 8
+  },
+  gameStackFrameQuake: {
+    backgroundColor: "rgba(7, 7, 9, 0.96)",
+    borderColor: "rgba(255, 92, 18, 0.45)",
+    position: "relative",
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.34,
+    shadowRadius: 28
+  },
+  quakeContentLayer: {
+    position: "relative",
+    zIndex: 2
+  },
+  quakeFrameChrome: {
+    bottom: -10,
+    left: -10,
+    overflow: "hidden",
+    position: "absolute",
+    right: -10,
+    top: -10,
+    zIndex: 0
+  },
+  quakeLavaRail: {
+    backgroundColor: "rgba(18, 18, 20, 0.96)",
+    borderColor: "rgba(255, 81, 0, 0.52)",
+    borderWidth: 1,
+    bottom: 18,
+    position: "absolute",
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.72,
+    shadowRadius: 22,
+    top: 18,
+    width: 28
+  },
+  quakeLavaRailLeft: {
+    left: 0
+  },
+  quakeLavaRailRight: {
+    right: 0
+  },
+  quakeLavaGlow: {
+    backgroundColor: "rgba(255, 58, 0, 0.28)",
+    height: 32,
+    left: 24,
+    position: "absolute",
+    right: 24,
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.85,
+    shadowRadius: 28
+  },
+  quakeLavaGlowTop: {
+    top: 0
+  },
+  quakeLavaGlowBottom: {
+    bottom: 0
+  },
+  quakeRockShard: {
+    backgroundColor: "#252225",
+    borderColor: "rgba(255, 92, 18, 0.28)",
+    borderWidth: 1,
+    position: "absolute",
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.36,
+    shadowRadius: 10,
+    transform: [{ rotate: "18deg" }]
+  },
+  quakeRockShardA: {
+    height: 34,
+    left: 4,
+    top: 72,
+    width: 22
+  },
+  quakeRockShardB: {
+    height: 46,
+    right: 0,
+    top: 164,
+    width: 28
+  },
+  quakeRockShardC: {
+    bottom: 102,
+    height: 42,
+    left: 0,
+    width: 30
+  },
+  quakeRockShardD: {
+    bottom: 42,
+    height: 34,
+    right: 6,
+    width: 24
   },
   mobileFrame: { alignSelf: "center" },
   mobileScrollContent: { alignItems: "center" },
@@ -3857,8 +4714,50 @@ const styles = StyleSheet.create({
   lineValue: { color: theme.colors.text, fontFamily: theme.fonts.display, fontSize: 24, lineHeight: 24 },
   lineValueDense: { fontSize: 16, lineHeight: 16 },
   lineValueTwentyOne: { color: "#f7fbff" },
-  matrix: { justifyContent: "space-between" },
-  matrixRow: { flexDirection: "row" },
+  manualQuakeButton: {
+    alignItems: "center",
+    alignSelf: "center",
+    backgroundColor: "rgba(20, 10, 8, 0.96)",
+    borderColor: "rgba(255, 122, 0, 0.82)",
+    borderWidth: 2,
+    gap: 2,
+    justifyContent: "center",
+    minHeight: 44,
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.xs,
+    shadowColor: "#ff3b00",
+    shadowOffset: { height: 0, width: 0 },
+    shadowOpacity: 0.45,
+    shadowRadius: 16,
+    width: "72%"
+  },
+  manualQuakeButtonDisabled: {
+    opacity: 0.48
+  },
+  manualQuakeButtonPressed: {
+    backgroundColor: "rgba(86, 18, 10, 0.98)",
+    borderColor: "#ffd400",
+    transform: [{ scale: 0.98 }]
+  },
+  manualQuakeButtonText: {
+    color: "#ffb02e",
+    fontFamily: theme.fonts.display,
+    fontSize: 20,
+    lineHeight: 20,
+    textShadowColor: "rgba(255, 58, 0, 0.86)",
+    textShadowOffset: { height: 0, width: 0 },
+    textShadowRadius: 10,
+    textTransform: "uppercase"
+  },
+  manualQuakeButtonMeta: {
+    color: "#fff2dd",
+    fontFamily: theme.fonts.label,
+    fontSize: 9,
+    letterSpacing: 1.1,
+    textTransform: "uppercase"
+  },
+  matrix: { justifyContent: "space-between", overflow: "visible" },
+  matrixRow: { flexDirection: "row", overflow: "visible" },
   playerMeta: { color: theme.colors.subtleText, fontFamily: theme.fonts.body, fontSize: 12, lineHeight: 16 },
   playerName: { color: theme.colors.text, fontFamily: theme.fonts.display, fontSize: 24, lineHeight: 24 },
   playerNameCompact: { fontSize: 20, lineHeight: 20 },
@@ -3889,6 +4788,32 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     overflow: "visible"
   },
+  quakeHoldingLabel: {
+    color: "#fff2dd",
+    fontFamily: theme.fonts.label,
+    fontSize: 12,
+    letterSpacing: 1.8,
+    textShadowColor: "rgba(255, 90, 0, 0.72)",
+    textShadowOffset: { height: 0, width: 0 },
+    textShadowRadius: 8,
+    textTransform: "uppercase"
+  },
+  quakeHoldingMeta: {
+    alignItems: "center",
+    backgroundColor: "rgba(6, 6, 8, 0.82)",
+    borderColor: "rgba(255, 122, 0, 0.42)",
+    borderWidth: 1,
+    flexDirection: "column",
+    gap: 2,
+    justifyContent: "center",
+    paddingVertical: 4,
+    width: "100%"
+  },
+  quakeHoldingValue: {
+    color: "#ffb02e",
+    fontFamily: theme.fonts.bodyBold,
+    fontSize: 11
+  },
   queueUndoButton: {
     gap: 4,
     paddingHorizontal: 0,
@@ -3897,7 +4822,8 @@ const styles = StyleSheet.create({
   queueUndoRow: {
     alignItems: "center",
     flexDirection: "row",
-    justifyContent: "center"
+    justifyContent: "center",
+    transform: [{ perspective: 900 }, { rotateX: "-2deg" }]
   },
   queueRow: {
     alignItems: "center",
@@ -3931,6 +4857,9 @@ const styles = StyleSheet.create({
     textAlign: "left"
   },
   root: { backgroundColor: theme.colors.background, flex: 1, overflow: "hidden" },
+  rootQuake: {
+    backgroundColor: "#070b2a"
+  },
   safe: { flex: 1 },
   sideCard: {
     gap: theme.spacing.sm,
@@ -3938,6 +4867,13 @@ const styles = StyleSheet.create({
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.14,
     shadowRadius: 18
+  },
+  sideCardQuake: {
+    backgroundColor: "rgba(10, 15, 52, 0.9)",
+    borderColor: "rgba(255, 212, 0, 0.28)",
+    shadowColor: "#ec008c",
+    shadowOpacity: 0.22,
+    shadowRadius: 22
   },
   sideControls: { gap: theme.spacing.sm },
   sideRail: { flexShrink: 0 },
@@ -4644,9 +5580,9 @@ const styles = StyleSheet.create({
   tile: {
     alignItems: "center",
     backgroundColor: "transparent",
-    borderColor: "rgba(158, 223, 255, 0.36)",
-    borderRadius: 13,
-    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.22)",
+    borderRadius: 12,
+    borderWidth: 0,
     height: "100%",
     justifyContent: "center",
     overflow: "visible",
@@ -4678,47 +5614,107 @@ const styles = StyleSheet.create({
     borderRadius: theme.radius.md
   },
   tileLead: {
-    elevation: 8,
-    shadowColor: "#9edfff",
-    shadowOffset: { height: 14, width: 0 },
-    shadowOpacity: 0.28,
+    elevation: 0
+  },
+  tileQuake: {
+    elevation: 0,
+    shadowOpacity: 0
+  },
+  tileQuakeDanger: {
+    shadowColor: "#ff3b30",
+    shadowOpacity: 0.22,
     shadowRadius: 18
   },
+  tileQuakeImageLayer: {
+    borderColor: "rgba(170, 170, 164, 0.2)",
+    borderRadius: 15,
+    borderWidth: 1,
+    bottom: 0,
+    left: 0,
+    overflow: "hidden",
+    position: "absolute",
+    right: 0,
+    top: 0,
+    shadowOpacity: 0
+  },
+  tileQuakeLayerImage: {
+    height: "100%",
+    opacity: 0.14,
+    width: "100%"
+  },
   tileLocked: {
-    borderColor: "rgba(255, 214, 120, 0.62)"
+    opacity: 0.92
   },
   tileLockPulse: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(255, 214, 120, 0.22)",
-    borderRadius: 13
+    backgroundColor: "rgba(255, 255, 255, 0.16)",
+    borderRadius: 12
   },
   tileShadow: {
-    backgroundColor: "rgba(0, 0, 0, 0.34)",
-    borderRadius: 13,
-    bottom: 1,
-    left: 7,
+    backgroundColor: "rgba(0, 0, 0, 0.22)",
+    borderRadius: 7,
+    bottom: -2,
+    left: 5,
     position: "absolute",
-    right: 7,
-    top: 9
+    right: 2,
+    top: 7
   },
   tileDepth: {
-    backgroundColor: "#04111d",
-    borderColor: "rgba(158, 223, 255, 0.1)",
-    borderRadius: 13,
-    borderWidth: 1,
-    bottom: 0,
-    left: 4,
+    backgroundColor: "rgba(0, 0, 0, 0.24)",
+    borderRadius: 7,
+    borderWidth: 0,
+    bottom: -1,
+    left: 3,
     position: "absolute",
-    right: 4,
-    top: 8
+    right: -1,
+    top: 5
   },
   tileSurface: {
-    borderRadius: 13,
-    bottom: 5,
+    borderRadius: 12,
+    bottom: 0,
     left: 0,
     position: "absolute",
     right: 0,
     top: 0
+  },
+  tileSurfaceQuake: {
+    borderColor: "rgba(170, 170, 164, 0.34)",
+    borderRadius: 15,
+    borderWidth: 1,
+    bottom: 0,
+    left: 0,
+    overflow: "hidden",
+    right: 0,
+    top: 0
+  },
+  tileSurfaceQuakeFlat: {
+    bottom: 0,
+    left: 0,
+    right: 0
+  },
+  tileQuakeImage: {
+    height: "100%",
+    opacity: 0.14,
+    width: "100%"
+  },
+  tileQuakeGloss: {
+    borderRadius: 15,
+    bottom: 22,
+    left: 6,
+    opacity: 0.86,
+    position: "absolute",
+    right: 14,
+    top: 2
+  },
+  tileQuakeInnerRim: {
+    borderColor: "rgba(190, 190, 184, 0.5)",
+    borderRadius: 13,
+    borderWidth: 1,
+    bottom: 25,
+    left: 9,
+    position: "absolute",
+    right: 18,
+    top: 5
   },
   tileGloss: {
     borderRadius: 13,
@@ -4775,8 +5771,20 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     justifyContent: "center",
-    paddingBottom: 6,
+    paddingBottom: 0,
     width: "100%"
+  },
+  tileCenterQuake: {
+    bottom: 0,
+    left: 0,
+    paddingBottom: 0,
+    paddingRight: 0,
+    position: "absolute",
+    right: 0,
+    top: 0
+  },
+  tileCenterQuakeFlat: {
+    bottom: 0
   },
   tileMiniPip: {
     backgroundColor: "rgba(255, 255, 255, 0.76)",
@@ -4802,12 +5810,19 @@ const styles = StyleSheet.create({
     fontFamily: theme.fonts.display,
     fontSize: 42,
     lineHeight: 42,
-    textShadowColor: "rgba(0, 0, 0, 0.34)",
-    textShadowOffset: { height: 2, width: 0 },
-    textShadowRadius: 2
+    textShadowColor: "transparent",
+    textShadowOffset: { height: 0, width: 0 },
+    textShadowRadius: 0
   },
   tileRankCompact: { fontSize: 24, lineHeight: 24 },
   tileRankDense: { fontSize: 18, lineHeight: 18 },
+  tileRankQuake: {
+    fontSize: 38,
+    lineHeight: 38,
+    textShadowColor: "rgba(0, 0, 0, 0.82)",
+    textShadowOffset: { height: 2, width: 0 },
+    textShadowRadius: 3
+  },
   tileRankSpecial: {
     color: "#ffd678"
   },
@@ -4992,6 +6007,10 @@ const styles = StyleSheet.create({
   },
   utilityButtonFull: {
     width: "100%"
+  },
+  utilityButtonGrow: {
+    flex: 1,
+    minWidth: 0
   },
   utilityGlyph: {
     color: theme.colors.text,

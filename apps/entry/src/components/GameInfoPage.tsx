@@ -51,11 +51,11 @@ export default function GameInfoPage() {
           </div>
 
           <div>
-            <p className="text-orange-300 text-xs font-bold uppercase tracking-wider">
+            <p className="text-orange-300 text-xs font-bold uppercase tracking-wider shadow-none [text-shadow:none]">
               {game.status}
             </p>
-            <h1 className="mt-2 text-4xl font-black sm:text-5xl">{game.name}</h1>
-            <p className="mt-3 text-lg font-semibold text-orange-100">
+            <h1 className="mt-2 text-4xl font-black shadow-none [text-shadow:none] sm:text-5xl">{game.name}</h1>
+            <p className="mt-3 text-lg font-semibold text-orange-100 shadow-none [text-shadow:none]">
               {game.tagline}
             </p>
             <p className="mt-5 text-base leading-7 text-white/80">
@@ -73,9 +73,9 @@ export default function GameInfoPage() {
             {launchUrl && (
               <a
                 href={launchUrl}
-                className={`mt-8 inline-flex items-center justify-center gap-2 bg-gradient-to-r ${game.color} ${game.hoverColor} text-white px-6 py-3 font-bold text-base transition-all duration-300 rounded-lg shadow-lg ${game.glowColor} hover:shadow-xl active:scale-95 border border-white/20 hover:border-white/40`}
+                className="mt-8 inline-flex min-w-36 items-center justify-center gap-2 rounded-full border border-orange-300 bg-orange-500 px-6 py-2.5 text-sm font-black text-white shadow-none outline-none backdrop-blur-0 filter-none transition-colors duration-200 [text-shadow:none] hover:border-orange-200 hover:bg-orange-400 active:scale-95"
               >
-                <Play className="h-5 w-5" />
+                <Play className="h-4 w-4" />
                 PLAY NOW
               </a>
             )}
