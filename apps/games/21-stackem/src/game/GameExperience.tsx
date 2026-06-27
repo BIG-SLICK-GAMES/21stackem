@@ -2949,6 +2949,7 @@ export function GameExperience() {
                       mode={currentWorld?.mode}
                       onPress={() => commitPlacement(rowIndex, colIndex)}
                       stackHeight={currentWorld?.quake?.stacks[rowIndex]?.[colIndex]?.length ?? 0}
+                      stackTiles={currentWorld?.quake?.stacks[rowIndex]?.[colIndex] ?? []}
                       tile={tile}
                     />
                   </View>
@@ -3237,6 +3238,7 @@ export function GameExperience() {
                               mode={currentWorld?.mode}
                               onPress={() => commitPlacement(rowIndex, colIndex)}
                               stackHeight={currentWorld?.quake?.stacks[rowIndex]?.[colIndex]?.length ?? 0}
+                              stackTiles={currentWorld?.quake?.stacks[rowIndex]?.[colIndex] ?? []}
                               tile={tile}
                             />
                           </View>
@@ -3503,6 +3505,7 @@ function BoardCell({
   mode = "classic",
   onPress,
   stackHeight = 0,
+  stackTiles = [],
   tile
 }: {
   busted?: boolean;
@@ -3517,6 +3520,7 @@ function BoardCell({
   mode?: GameMode;
   onPress: () => void;
   stackHeight?: number;
+  stackTiles?: StackTile[];
   tile: StackTile | null;
 }) {
   const appearance = useStackemAppearance();
@@ -3568,6 +3572,7 @@ function BoardCell({
             locked={locked}
             quake={mode === "quake"}
             stackHeight={stackHeight}
+            stackTiles={stackTiles}
             tile={tile}
           />
         ) : (
@@ -3611,6 +3616,7 @@ function TileFace({
   locked = false,
   quake = false,
   stackHeight = 1,
+  stackTiles = [],
   tile
 }: {
   compact?: boolean;
@@ -3620,6 +3626,7 @@ function TileFace({
   locked?: boolean;
   quake?: boolean;
   stackHeight?: number;
+  stackTiles?: StackTile[];
   tile: StackTile;
 }) {
   const appearance = useStackemAppearance();
@@ -3670,6 +3677,9 @@ function TileFace({
     outputRange: [8, 0]
   });
   const visibleDepthLayers = quake ? Math.min(Math.max(stackHeight - 1, 0), 9) : 0;
+  const depthTiles = quake
+    ? stackTiles.slice(Math.max(0, stackTiles.length - 1 - visibleDepthLayers), -1)
+    : [];
   const quakeLayerDepth = 7;
   const quakeStackLift = quake
     ? -Math.min(visibleDepthLayers * quakeLayerDepth, 63)
@@ -3692,13 +3702,16 @@ function TileFace({
     >
       {quake && visibleDepthLayers > 0 ? (
         <>
-          {Array.from({ length: visibleDepthLayers }, (_, index) => (
+          {Array.from({ length: visibleDepthLayers }, (_, index) => {
+            const depthTile = depthTiles[index] ?? tile;
+
+            return (
             <View
               key={`quake-depth-${index}`}
               style={[
                 styles.tileQuakeImageLayer,
                 {
-                  backgroundColor: quakeTileColor,
+                  backgroundColor: getQuakeTileColor(depthTile),
                   opacity: 0.72 + index * 0.025,
                   transform: [
                     {
@@ -3714,7 +3727,8 @@ function TileFace({
                 style={styles.tileQuakeLayerImage}
               />
             </View>
-          ))}
+            );
+          })}
         </>
       ) : null}
       {quake ? (
