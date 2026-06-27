@@ -324,23 +324,23 @@ function getPoolTileTextColor(tile: StackTile) {
 
 function getQuakeTileColor(tile: StackTile) {
   if (tile.kind !== "standard") {
-    return "#343a40";
+    return "#e8e4ff";
   }
 
   const rankColors: Record<StandardTileRank, string> = {
-    A: "#b88900",
-    "2": "#0047a8",
-    "3": "#9e1414",
-    "4": "#4f1ea8",
-    "5": "#b94f00",
-    "6": "#006f37",
-    "7": "#68111f",
-    "8": "#0c1118",
-    "9": "#c49b00",
-    "10": "#005fc7",
-    J: "#b51d18",
-    Q: "#6028b9",
-    K: "#c76500"
+    A: "#fff1a8",
+    "2": "#b9defd",
+    "3": "#ffc3c0",
+    "4": "#d9c4ff",
+    "5": "#ffd4a8",
+    "6": "#bcefd0",
+    "7": "#efbcc7",
+    "8": "#d8dde8",
+    "9": "#fff6c8",
+    "10": "#c7e9ff",
+    J: "#ffd5d2",
+    Q: "#e5d4ff",
+    K: "#ffe1bf"
   };
 
   return rankColors[tile.rank as StandardTileRank];
@@ -3667,7 +3667,7 @@ function TileFace({
   const blockSurface = getBlockTileSurface(tile);
   const blockText = getBlockTileTextColor(tile);
   const quakeTileColor = getQuakeTileColor(tile);
-  const quakeText = "#ffffff";
+  const quakeText = "#2f3f4f";
   const spawnScale = spawnAnim.interpolate({
     inputRange: [0, 0.55, 1],
     outputRange: [0.86, 1.08, 1]
@@ -3842,33 +3842,33 @@ const styles = StyleSheet.create({
     shadowRadius: 18
   },
   bannerScoreBarQuake: {
-    backgroundColor: "rgba(14, 21, 70, 0.98)",
-    borderColor: "rgba(255, 212, 0, 0.78)",
-    shadowColor: "#00b8d9",
-    shadowOpacity: 0.32,
+    backgroundColor: "rgba(250, 253, 255, 0.96)",
+    borderColor: "rgba(186, 213, 232, 0.78)",
+    shadowColor: "#b9defd",
+    shadowOpacity: 0.26,
     shadowRadius: 24
   },
   quakeHud: {
     alignItems: "center",
-    backgroundColor: "rgba(9, 10, 14, 0.98)",
-    borderColor: "rgba(255, 112, 24, 0.72)",
+    backgroundColor: "rgba(249, 252, 255, 0.96)",
+    borderColor: "rgba(197, 221, 239, 0.9)",
     borderWidth: 2,
     flexDirection: "row",
     gap: theme.spacing.sm,
     justifyContent: "space-between",
     overflow: "hidden",
     position: "relative",
-    shadowColor: "#ff3b00",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.34,
+    shadowOpacity: 0.32,
     shadowRadius: 22
   },
   quakeHudCompact: {
     gap: theme.spacing.xs
   },
   quakeHudPlate: {
-    backgroundColor: "rgba(255, 255, 255, 0.05)",
-    borderBottomColor: "rgba(0, 0, 0, 0.42)",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderBottomColor: "rgba(186, 213, 232, 0.46)",
     borderBottomWidth: 2,
     height: "42%",
     left: 0,
@@ -3878,8 +3878,8 @@ const styles = StyleSheet.create({
   },
   quakeHudScorePanel: {
     alignItems: "center",
-    backgroundColor: "rgba(2, 3, 6, 0.82)",
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(255, 255, 255, 0.8)",
+    borderColor: "rgba(186, 213, 232, 0.5)",
     borderWidth: 1,
     flex: 0.9,
     gap: 2,
@@ -3890,8 +3890,8 @@ const styles = StyleSheet.create({
   },
   quakeHudTimerPanel: {
     alignItems: "center",
-    backgroundColor: "rgba(10, 2, 2, 0.9)",
-    borderColor: "rgba(255, 48, 16, 0.86)",
+    backgroundColor: "rgba(244, 250, 255, 0.94)",
+    borderColor: "rgba(185, 222, 253, 0.9)",
     borderWidth: 2,
     flex: 1.25,
     gap: 2,
@@ -3899,9 +3899,9 @@ const styles = StyleSheet.create({
     minWidth: 124,
     paddingHorizontal: theme.spacing.sm,
     paddingVertical: theme.spacing.xs,
-    shadowColor: "#ff3b00",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.48,
+    shadowOpacity: 0.38,
     shadowRadius: 12
   },
   quakeHudActions: {
@@ -3912,53 +3912,53 @@ const styles = StyleSheet.create({
   },
   quakeHudButton: {
     alignItems: "center",
-    backgroundColor: "rgba(18, 18, 22, 0.96)",
-    borderColor: "rgba(255, 124, 24, 0.68)",
+    backgroundColor: "rgba(255, 255, 255, 0.86)",
+    borderColor: "rgba(197, 221, 239, 0.82)",
     borderWidth: 2,
     height: 42,
     justifyContent: "center",
-    shadowColor: "#ff7a00",
+    shadowColor: "#d9c4ff",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.34,
+    shadowOpacity: 0.28,
     shadowRadius: 10,
     width: 42
   },
   quakeHudButtonPressed: {
-    backgroundColor: "rgba(255, 90, 20, 0.26)"
+    backgroundColor: "rgba(217, 196, 255, 0.42)"
   },
   quakeHudButtonText: {
-    color: "#ffb02e",
+    color: "#40576c",
     fontFamily: theme.fonts.display,
     fontSize: 24,
     lineHeight: 24
   },
   quakeHudLabel: {
-    color: "#fff2dd",
+    color: "#6e8295",
     fontFamily: theme.fonts.label,
     fontSize: 10,
     letterSpacing: 1.4,
     textTransform: "uppercase"
   },
   quakeHudScore: {
-    color: "#ffb02e",
+    color: "#40576c",
     fontFamily: theme.fonts.display,
     fontSize: 26,
     lineHeight: 26,
-    textShadowColor: "rgba(255, 80, 0, 0.72)",
+    textShadowColor: "rgba(185, 222, 253, 0.72)",
     textShadowOffset: { height: 0, width: 0 },
     textShadowRadius: 8
   },
   quakeHudBest: {
-    color: "#f8ead9",
+    color: "#7b8fa2",
     fontFamily: theme.fonts.bodyBold,
     fontSize: 11
   },
   quakeHudTimer: {
-    color: "#ffb02e",
+    color: "#40576c",
     fontFamily: theme.fonts.display,
     fontSize: 28,
     lineHeight: 28,
-    textShadowColor: "rgba(255, 70, 0, 0.9)",
+    textShadowColor: "rgba(217, 196, 255, 0.7)",
     textShadowOffset: { height: 0, width: 0 },
     textShadowRadius: 10
   },
@@ -3968,15 +3968,15 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   quakeHudProgressSegment: {
-    backgroundColor: "rgba(52, 26, 18, 0.92)",
-    borderColor: "rgba(255, 122, 0, 0.28)",
+    backgroundColor: "rgba(215, 229, 240, 0.86)",
+    borderColor: "rgba(186, 213, 232, 0.5)",
     borderWidth: 1,
     flex: 1,
     height: 8
   },
   quakeHudProgressSegmentLit: {
-    backgroundColor: "#ff7a00",
-    borderColor: "#ffd400"
+    backgroundColor: "#b9defd",
+    borderColor: "#d9c4ff"
   },
   bannerCopy: {
     flex: 1,
@@ -4295,15 +4295,15 @@ const styles = StyleSheet.create({
     shadowRadius: 22
   },
   boardStripQuake: {
-    backgroundColor: "rgba(16, 15, 16, 0.98)",
-    borderColor: "rgba(255, 92, 18, 0.62)",
-    shadowColor: "#ff3b00",
-    shadowOpacity: 0.36,
+    backgroundColor: "rgba(248, 252, 255, 0.96)",
+    borderColor: "rgba(197, 221, 239, 0.74)",
+    shadowColor: "#b9defd",
+    shadowOpacity: 0.3,
     shadowRadius: 32
   },
   quakeBoardSurface: {
-    backgroundColor: "rgba(13, 14, 15, 0.96)",
-    borderColor: "rgba(255, 122, 0, 0.2)",
+    backgroundColor: "rgba(238, 246, 252, 0.94)",
+    borderColor: "rgba(197, 221, 239, 0.5)",
     borderWidth: 1,
     bottom: 8,
     left: 8,
@@ -4313,13 +4313,13 @@ const styles = StyleSheet.create({
     top: 8
   },
   quakeBoardCrack: {
-    backgroundColor: "#ff5a00",
+    backgroundColor: "#b9defd",
     height: 2,
-    opacity: 0.7,
+    opacity: 0.48,
     position: "absolute",
-    shadowColor: "#ff3b00",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.9,
+    shadowOpacity: 0.64,
     shadowRadius: 8
   },
   quakeBoardCrackA: {
@@ -4341,13 +4341,13 @@ const styles = StyleSheet.create({
     width: "58%"
   },
   quakeBoardGlow: {
-    backgroundColor: "rgba(255, 80, 0, 0.2)",
+    backgroundColor: "rgba(217, 196, 255, 0.24)",
     borderRadius: 999,
     height: 110,
     position: "absolute",
-    shadowColor: "#ff3b00",
+    shadowColor: "#d9c4ff",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.8,
+    shadowOpacity: 0.62,
     shadowRadius: 34,
     width: 110
   },
@@ -4383,10 +4383,10 @@ const styles = StyleSheet.create({
     zIndex: 3
   },
   lineBurstWarning: {
-    backgroundColor: "rgba(255, 92, 92, 0.32)",
+    backgroundColor: "rgba(255, 195, 192, 0.36)",
     borderColor: "rgba(255, 214, 214, 0.95)",
     borderWidth: 1,
-    shadowColor: "#ff5c5c"
+    shadowColor: "#ffc3c0"
   },
   boardWrap: { alignItems: "center", flex: 1, justifyContent: "center" },
   bottomMain: { flex: 1, flexDirection: "row" },
@@ -4423,16 +4423,16 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   cellQuakeBase: {
-    backgroundColor: "rgba(22, 22, 24, 0.96)",
-    borderBottomColor: "rgba(0, 0, 0, 0.58)",
-    borderColor: "rgba(102, 92, 84, 0.72)",
-    borderLeftColor: "rgba(255, 255, 255, 0.08)",
-    borderRightColor: "rgba(0, 0, 0, 0.38)",
-    borderTopColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: "rgba(255, 255, 255, 0.72)",
+    borderBottomColor: "rgba(151, 181, 204, 0.34)",
+    borderColor: "rgba(197, 221, 239, 0.82)",
+    borderLeftColor: "rgba(255, 255, 255, 0.9)",
+    borderRightColor: "rgba(151, 181, 204, 0.36)",
+    borderTopColor: "rgba(255, 255, 255, 0.96)",
     borderWidth: 2,
-    shadowColor: "#000000",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 4, width: 0 },
-    shadowOpacity: 0.36,
+    shadowOpacity: 0.24,
     shadowRadius: 5
   },
   cellBusted: { backgroundColor: "rgba(255, 143, 143, 0.14)", borderColor: "rgba(255, 143, 143, 0.36)" },
@@ -4477,7 +4477,7 @@ const styles = StyleSheet.create({
     top: -284,
     zIndex: 6
   },
-  cellLastPlaced: { borderColor: "#ffb02e" },
+  cellLastPlaced: { borderColor: "#b9defd" },
   cellLocked: {
     backgroundColor: "rgba(34, 197, 94, 0.18)",
     borderColor: "rgba(74, 222, 128, 0.74)"
@@ -4485,37 +4485,37 @@ const styles = StyleSheet.create({
   cellPlayable: { borderColor: "rgba(255, 176, 46, 0.58)" },
   cellPressed: { opacity: 0.86 },
   cellQuakeStack: {
-    backgroundColor: "rgba(30, 27, 23, 0.98)",
-    borderColor: "rgba(255, 122, 0, 0.42)",
-    shadowColor: "#ff7a00",
+    backgroundColor: "rgba(245, 251, 255, 0.94)",
+    borderColor: "rgba(185, 222, 253, 0.7)",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.22,
+    shadowOpacity: 0.28,
     shadowRadius: 10
   },
   cellQuakeStackCritical: {
-    backgroundColor: "rgba(86, 13, 10, 0.98)",
-    borderColor: "rgba(255, 31, 31, 0.9)",
-    shadowColor: "#ff1f1f",
-    shadowOpacity: 0.84,
+    backgroundColor: "rgba(255, 223, 226, 0.96)",
+    borderColor: "rgba(255, 157, 166, 0.9)",
+    shadowColor: "#ffc3c0",
+    shadowOpacity: 0.78,
     shadowRadius: 22
   },
   cellQuakeStackHigh: {
-    backgroundColor: "rgba(86, 43, 10, 0.98)",
-    borderColor: "rgba(255, 160, 32, 0.82)",
-    shadowColor: "#ff7a00",
-    shadowOpacity: 0.62,
+    backgroundColor: "rgba(255, 241, 220, 0.96)",
+    borderColor: "rgba(255, 212, 168, 0.86)",
+    shadowColor: "#ffd4a8",
+    shadowOpacity: 0.58,
     shadowRadius: 18
   },
   cellQuakeStackMedium: {
-    backgroundColor: "rgba(53, 42, 20, 0.98)",
-    borderColor: "rgba(255, 212, 0, 0.62)",
-    shadowColor: "#ffd400",
-    shadowOpacity: 0.4,
+    backgroundColor: "rgba(245, 239, 255, 0.96)",
+    borderColor: "rgba(217, 196, 255, 0.78)",
+    shadowColor: "#d9c4ff",
+    shadowOpacity: 0.42,
     shadowRadius: 14
   },
   cellVoid: {
-    backgroundColor: "rgba(4, 17, 29, 0.42)",
-    borderColor: "rgba(118, 169, 207, 0.2)",
+    backgroundColor: "rgba(255, 255, 255, 0.38)",
+    borderColor: "rgba(197, 221, 239, 0.46)",
     borderRadius: 10,
     borderWidth: 1,
     height: "100%",
@@ -4594,12 +4594,12 @@ const styles = StyleSheet.create({
     padding: 8
   },
   gameStackFrameQuake: {
-    backgroundColor: "rgba(7, 7, 9, 0.96)",
-    borderColor: "rgba(255, 92, 18, 0.45)",
+    backgroundColor: "rgba(250, 253, 255, 0.94)",
+    borderColor: "rgba(197, 221, 239, 0.72)",
     position: "relative",
-    shadowColor: "#ff3b00",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.34,
+    shadowOpacity: 0.28,
     shadowRadius: 28
   },
   quakeContentLayer: {
@@ -4616,14 +4616,14 @@ const styles = StyleSheet.create({
     zIndex: 0
   },
   quakeLavaRail: {
-    backgroundColor: "rgba(18, 18, 20, 0.96)",
-    borderColor: "rgba(255, 81, 0, 0.52)",
+    backgroundColor: "rgba(245, 251, 255, 0.82)",
+    borderColor: "rgba(197, 221, 239, 0.58)",
     borderWidth: 1,
     bottom: 18,
     position: "absolute",
-    shadowColor: "#ff3b00",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.72,
+    shadowOpacity: 0.46,
     shadowRadius: 22,
     top: 18,
     width: 28
@@ -4635,14 +4635,14 @@ const styles = StyleSheet.create({
     right: 0
   },
   quakeLavaGlow: {
-    backgroundColor: "rgba(255, 58, 0, 0.28)",
+    backgroundColor: "rgba(217, 196, 255, 0.28)",
     height: 32,
     left: 24,
     position: "absolute",
     right: 24,
-    shadowColor: "#ff3b00",
+    shadowColor: "#d9c4ff",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.85,
+    shadowOpacity: 0.62,
     shadowRadius: 28
   },
   quakeLavaGlowTop: {
@@ -4652,13 +4652,13 @@ const styles = StyleSheet.create({
     bottom: 0
   },
   quakeRockShard: {
-    backgroundColor: "#252225",
-    borderColor: "rgba(255, 92, 18, 0.28)",
+    backgroundColor: "#edf6fc",
+    borderColor: "rgba(185, 222, 253, 0.48)",
     borderWidth: 1,
     position: "absolute",
-    shadowColor: "#ff3b00",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.36,
+    shadowOpacity: 0.28,
     shadowRadius: 10,
     transform: [{ rotate: "18deg" }]
   },
@@ -4731,17 +4731,17 @@ const styles = StyleSheet.create({
   manualQuakeButton: {
     alignItems: "center",
     alignSelf: "center",
-    backgroundColor: "rgba(20, 10, 8, 0.96)",
-    borderColor: "rgba(255, 122, 0, 0.82)",
+    backgroundColor: "rgba(255, 255, 255, 0.9)",
+    borderColor: "rgba(185, 222, 253, 0.9)",
     borderWidth: 2,
     gap: 2,
     justifyContent: "center",
     minHeight: 44,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.xs,
-    shadowColor: "#ff3b00",
+    shadowColor: "#b9defd",
     shadowOffset: { height: 0, width: 0 },
-    shadowOpacity: 0.45,
+    shadowOpacity: 0.32,
     shadowRadius: 16,
     width: "72%"
   },
@@ -4749,22 +4749,22 @@ const styles = StyleSheet.create({
     opacity: 0.48
   },
   manualQuakeButtonPressed: {
-    backgroundColor: "rgba(86, 18, 10, 0.98)",
-    borderColor: "#ffd400",
+    backgroundColor: "rgba(217, 196, 255, 0.42)",
+    borderColor: "#d9c4ff",
     transform: [{ scale: 0.98 }]
   },
   manualQuakeButtonText: {
-    color: "#ffb02e",
+    color: "#40576c",
     fontFamily: theme.fonts.display,
     fontSize: 20,
     lineHeight: 20,
-    textShadowColor: "rgba(255, 58, 0, 0.86)",
+    textShadowColor: "rgba(185, 222, 253, 0.7)",
     textShadowOffset: { height: 0, width: 0 },
     textShadowRadius: 10,
     textTransform: "uppercase"
   },
   manualQuakeButtonMeta: {
-    color: "#fff2dd",
+    color: "#6e8295",
     fontFamily: theme.fonts.label,
     fontSize: 9,
     letterSpacing: 1.1,
@@ -4803,19 +4803,19 @@ const styles = StyleSheet.create({
     overflow: "visible"
   },
   quakeHoldingLabel: {
-    color: "#fff2dd",
+    color: "#6e8295",
     fontFamily: theme.fonts.label,
     fontSize: 12,
     letterSpacing: 1.8,
-    textShadowColor: "rgba(255, 90, 0, 0.72)",
+    textShadowColor: "rgba(185, 222, 253, 0.62)",
     textShadowOffset: { height: 0, width: 0 },
     textShadowRadius: 8,
     textTransform: "uppercase"
   },
   quakeHoldingMeta: {
     alignItems: "center",
-    backgroundColor: "rgba(6, 6, 8, 0.82)",
-    borderColor: "rgba(255, 122, 0, 0.42)",
+    backgroundColor: "rgba(255, 255, 255, 0.76)",
+    borderColor: "rgba(197, 221, 239, 0.62)",
     borderWidth: 1,
     flexDirection: "column",
     gap: 2,
@@ -4824,7 +4824,7 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   quakeHoldingValue: {
-    color: "#ffb02e",
+    color: "#40576c",
     fontFamily: theme.fonts.bodyBold,
     fontSize: 11
   },
@@ -4872,7 +4872,7 @@ const styles = StyleSheet.create({
   },
   root: { backgroundColor: theme.colors.background, flex: 1, overflow: "hidden" },
   rootQuake: {
-    backgroundColor: "#070b2a"
+    backgroundColor: "#f7fbff"
   },
   safe: { flex: 1 },
   sideCard: {
@@ -4883,10 +4883,10 @@ const styles = StyleSheet.create({
     shadowRadius: 18
   },
   sideCardQuake: {
-    backgroundColor: "rgba(10, 15, 52, 0.9)",
-    borderColor: "rgba(255, 212, 0, 0.28)",
-    shadowColor: "#ec008c",
-    shadowOpacity: 0.22,
+    backgroundColor: "rgba(255, 255, 255, 0.78)",
+    borderColor: "rgba(197, 221, 239, 0.5)",
+    shadowColor: "#d9c4ff",
+    shadowOpacity: 0.2,
     shadowRadius: 22
   },
   sideControls: { gap: theme.spacing.sm },
@@ -5635,12 +5635,12 @@ const styles = StyleSheet.create({
     shadowOpacity: 0
   },
   tileQuakeDanger: {
-    shadowColor: "#ff3b30",
-    shadowOpacity: 0.22,
+    shadowColor: "#ffc3c0",
+    shadowOpacity: 0.28,
     shadowRadius: 18
   },
   tileQuakeImageLayer: {
-    borderColor: "rgba(170, 170, 164, 0.2)",
+    borderColor: "rgba(151, 181, 204, 0.22)",
     borderRadius: 15,
     borderWidth: 1,
     bottom: 0,
@@ -5653,7 +5653,7 @@ const styles = StyleSheet.create({
   },
   tileQuakeLayerImage: {
     height: "100%",
-    opacity: 0.14,
+    opacity: 0.18,
     width: "100%"
   },
   tileLocked: {
@@ -5692,7 +5692,7 @@ const styles = StyleSheet.create({
     top: 0
   },
   tileSurfaceQuake: {
-    borderColor: "rgba(170, 170, 164, 0.34)",
+    borderColor: "rgba(151, 181, 204, 0.34)",
     borderRadius: 15,
     borderWidth: 1,
     bottom: 0,
@@ -5708,7 +5708,7 @@ const styles = StyleSheet.create({
   },
   tileQuakeImage: {
     height: "100%",
-    opacity: 0.14,
+    opacity: 0.18,
     width: "100%"
   },
   tileQuakeGloss: {
@@ -5721,7 +5721,7 @@ const styles = StyleSheet.create({
     top: 2
   },
   tileQuakeInnerRim: {
-    borderColor: "rgba(190, 190, 184, 0.5)",
+    borderColor: "rgba(255, 255, 255, 0.58)",
     borderRadius: 13,
     borderWidth: 1,
     bottom: 25,
@@ -5833,9 +5833,9 @@ const styles = StyleSheet.create({
   tileRankQuake: {
     fontSize: 38,
     lineHeight: 38,
-    textShadowColor: "rgba(0, 0, 0, 0.82)",
-    textShadowOffset: { height: 2, width: 0 },
-    textShadowRadius: 3
+    textShadowColor: "rgba(255, 255, 255, 0.78)",
+    textShadowOffset: { height: 1, width: 0 },
+    textShadowRadius: 2
   },
   tileRankSpecial: {
     color: "#ffd678"
