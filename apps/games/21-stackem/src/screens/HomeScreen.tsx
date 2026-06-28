@@ -20,6 +20,7 @@ import { stackemRoutes } from "../navigation/routes";
 import { hubStackemApi } from "../platform/api/stackem";
 import { useHubSession } from "../platform/auth/session";
 import { formatChipCount } from "../platform/lib/format";
+import { openBigSlickGamesWebsite } from "../platform/lib/external-links";
 import { fireHaptic } from "../services/haptics";
 import { useGameSettings } from "../store/game-settings";
 import { theme } from "../theme";
@@ -1149,6 +1150,20 @@ export function HomeScreen() {
                   <Text numberOfLines={1} style={styles.balance}>{displayBalance}</Text>
                 </View>
               </View>
+              <Pressable
+                accessibilityLabel="Return to BSG Hub"
+                onPress={() => {
+                  void fireHaptic(settings.haptics, "tap");
+                  void openBigSlickGamesWebsite();
+                }}
+                style={({ pressed }) => [
+                  styles.hubReturnButton,
+                  pressed && styles.cardPressed
+                ]}
+              >
+                <MaterialCommunityIcons color="#f7fbff" name="home-export-outline" size={18} />
+                <Text style={styles.hubReturnText}>BSG Hub</Text>
+              </Pressable>
             </View>
 
             <AppNav
@@ -1559,6 +1574,25 @@ const styles = StyleSheet.create({
     gap: 12,
     paddingHorizontal: 14,
     paddingVertical: 14
+  },
+  hubReturnButton: {
+    alignItems: "center",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.5)",
+    borderRadius: 18,
+    borderWidth: 1,
+    flexDirection: "row",
+    gap: 5,
+    justifyContent: "center",
+    minHeight: 38,
+    paddingHorizontal: 9
+  },
+  hubReturnText: {
+    color: "#f7fbff",
+    fontFamily: theme.fonts.label,
+    fontSize: 10,
+    letterSpacing: 0.8,
+    textTransform: "uppercase"
   },
   innerFrame: {
     backgroundColor: "rgba(2, 9, 17, 0.42)",

@@ -24,6 +24,7 @@ import { stackemRoutes } from "../navigation/routes";
 import { hubStackemApi } from "../platform/api/stackem";
 import { useHubSession } from "../platform/auth/session";
 import { formatChipCount } from "../platform/lib/format";
+import { openBigSlickGamesWebsite } from "../platform/lib/external-links";
 import { fireHaptic } from "../services/haptics";
 import { useGameSettings } from "../store/game-settings";
 import { clamp, theme } from "../theme";
@@ -2205,6 +2206,20 @@ export function GameExperience() {
           >
             <Text style={styles.bannerMenuMiniLabel}>Home</Text>
           </Pressable>
+          <Pressable
+            onPress={() => {
+              setMenuOpen(false);
+              void fireHaptic(settings.haptics, "tap");
+              void openBigSlickGamesWebsite();
+            }}
+            style={({ pressed }) => [
+              styles.bannerMenuMiniButton,
+              styles.bannerMenuHubButton,
+              pressed && styles.bannerMenuButtonPressed
+            ]}
+          >
+            <Text style={styles.bannerMenuMiniLabel}>BSG Hub</Text>
+          </Pressable>
         </View>
       </View>
     </View>
@@ -4126,6 +4141,10 @@ const styles = StyleSheet.create({
     minHeight: 34,
     minWidth: 96,
     paddingHorizontal: theme.spacing.sm
+  },
+  bannerMenuHubButton: {
+    backgroundColor: "rgba(111, 168, 216, 0.18)",
+    borderColor: "rgba(215, 236, 251, 0.34)"
   },
   bannerMenuMiniLabel: {
     color: theme.colors.text,
