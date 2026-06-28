@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef } from "react";
 import { Animated, Easing, Linking, Pressable, StyleSheet, View } from "react-native";
 
 import { stackemRoutes } from "../../navigation/routes";
+import { useTelegramMiniApp } from "../../platform/telegram/mini-app";
 import { fireHaptic } from "../../services/haptics";
 import { useGameSettings } from "../../store/game-settings";
 
@@ -124,7 +125,11 @@ export function AppNav({
 }) {
   const pathname = usePathname();
   const { settings } = useGameSettings();
+  const { isTelegram } = useTelegramMiniApp();
   const resolvedKey = activeKey ?? PATH_TO_KEY[pathname];
+  const visibleItems = isTelegram
+    ? NAV_ITEMS.filter((item) => item.key !== "store")
+    : NAV_ITEMS;
 
   return (
     <LinearGradient
@@ -133,7 +138,7 @@ export function AppNav({
       start={{ x: 0, y: 0 }}
       style={styles.panel}
     >
-      {NAV_ITEMS.map((item) => (
+      {visibleItems.map((item) => (
         <NavIcon
           key={item.key}
           icon={item.icon}

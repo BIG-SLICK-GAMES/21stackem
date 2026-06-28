@@ -25,6 +25,7 @@ import { hubStackemApi } from "../platform/api/stackem";
 import { useHubSession } from "../platform/auth/session";
 import { formatChipCount } from "../platform/lib/format";
 import { openBigSlickGamesWebsite } from "../platform/lib/external-links";
+import { useTelegramMiniApp } from "../platform/telegram/mini-app";
 import { fireHaptic } from "../services/haptics";
 import { useGameSettings } from "../store/game-settings";
 import { clamp, theme } from "../theme";
@@ -358,6 +359,7 @@ function getCountdownCue(seconds: number) {
 export function GameExperience() {
   const device = useDeviceProfile();
   const { settings } = useGameSettings();
+  const { isTelegram } = useTelegramMiniApp();
   const appearance = getStackemAppearance(settings);
   const { isReady, profile, refreshProfile, status, token } = useHubSession();
   const params = useLocalSearchParams<{
@@ -2170,18 +2172,20 @@ export function GameExperience() {
           >
             <Text style={styles.bannerMenuMiniLabel}>Leaderboard</Text>
           </Pressable>
-          <Pressable
-            onPress={() => {
-              setMenuOpen(false);
-              router.push(stackemRoutes.store);
-            }}
-            style={({ pressed }) => [
-              styles.bannerMenuMiniButton,
-              pressed && styles.bannerMenuButtonPressed
-            ]}
-          >
-            <Text style={styles.bannerMenuMiniLabel}>Store</Text>
-          </Pressable>
+          {isTelegram ? null : (
+            <Pressable
+              onPress={() => {
+                setMenuOpen(false);
+                router.push(stackemRoutes.store);
+              }}
+              style={({ pressed }) => [
+                styles.bannerMenuMiniButton,
+                pressed && styles.bannerMenuButtonPressed
+              ]}
+            >
+              <Text style={styles.bannerMenuMiniLabel}>Store</Text>
+            </Pressable>
+          )}
           <Pressable
             onPress={() => {
               setMenuOpen(false);

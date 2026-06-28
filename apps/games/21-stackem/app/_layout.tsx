@@ -31,6 +31,7 @@ export default function RootLayout() {
         <Stack.Screen name="profile" options={{ title: "Store" }} />
         <Stack.Screen name="wallet" options={{ title: "Store" }} />
         <Stack.Screen name="rewards" options={{ title: "Rewards" }} />
+        <Stack.Screen name="terms" options={{ title: "Terms" }} />
         <Stack.Screen name="launcher" options={{ title: "Launcher" }} />
         <Stack.Screen name="stackem" options={{ headerShown: false }} />
         <Stack.Screen

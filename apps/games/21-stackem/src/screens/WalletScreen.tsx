@@ -9,7 +9,12 @@ import { GameButton } from "../components/ui/GameButton";
 import { hubShopApi } from "../platform/api/shop";
 import { hubTransactionsApi } from "../platform/api/transactions";
 import { useHubSession } from "../platform/auth/session";
+import {
+  TELEGRAM_VIRTUAL_CHIP_NOTICE,
+  VIRTUAL_CHIP_NOTICE
+} from "../platform/compliance/virtual-chips";
 import { formatChipCount, getErrorMessage } from "../platform/lib/format";
+import { useTelegramMiniApp } from "../platform/telegram/mini-app";
 import type {
   HubShopItem,
   HubTransaction,
@@ -19,6 +24,7 @@ import { theme } from "../theme";
 
 export function WalletScreen() {
   const { profile, refreshProfile, status, token } = useHubSession();
+  const { isTelegram } = useTelegramMiniApp();
   const [shopItems, setShopItems] = useState<HubShopItem[]>([]);
   const [transactions, setTransactions] = useState<HubTransaction[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -91,11 +97,13 @@ export function WalletScreen() {
       <AppNav />
       <HubPanel
         subtitle={
-          isAuthenticatedUser
-            ? "Store balance comes from the shared hub user record and transaction collection."
-            : "Local store preview. Sign in to sync purchases and transaction history."
+          isTelegram
+            ? "Telegram mode shows virtual-chip balance only. No real-money purchases or cash-out."
+            : isAuthenticatedUser
+              ? "Store balance comes from the shared hub user record and transaction collection."
+              : "Local store preview. Sign in to sync purchases and transaction history."
         }
-        title="Store"
+        title={isTelegram ? "Chips" : "Store"}
       >
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Available chips</Text>
@@ -103,65 +111,72 @@ export function WalletScreen() {
             {formatChipCount(profile?.nChips ?? 10000)}
           </Text>
           <Text style={styles.balanceText}>
-            This balance should be reusable across games that share the same
-            backend user.
+            {isTelegram ? TELEGRAM_VIRTUAL_CHIP_NOTICE : VIRTUAL_CHIP_NOTICE}
           </Text>
         </View>
         {isLoading ? <HubNotice message="Refreshing store data..." /> : null}
-        {!isAuthenticatedUser ? (
+        {isTelegram ? (
+          <HubNotice message="Purchases are disabled in Telegram mode for this release." />
+        ) : !isAuthenticatedUser ? (
           <HubNotice message="Local mode is active. Purchases are disabled until a hub account is connected." />
         ) : null}
         {error ? <HubNotice message={error} tone="error" /> : null}
         {success ? <HubNotice message={success} tone="success" /> : null}
       </HubPanel>
 
-      <HubPanel
-        subtitle="Shop items are read from the backend settings document."
-        title="Shop"
-      >
-        <View style={styles.list}>
-          {shopItems.length ? (
-            shopItems.map((item, index) => (
-              <View key={`${item.nPrice}-${index}`} style={styles.listCard}>
-                <Text style={styles.itemTitle}>
-                  {formatChipCount(item.nChips as number)} chips
-                </Text>
-                <Text style={styles.itemBody}>
-                  Price point:{" "}
-                  {typeof item.nPrice === "number" ? item.nPrice : "--"}
-                </Text>
-                <GameButton
-                  disabled={
-                    !isAuthenticatedUser ||
-                    typeof item.nPrice !== "number" ||
-                    activePurchasePrice === item.nPrice
-                  }
-                  label="Buy"
-                  onPress={() => {
-                    if (typeof item.nPrice === "number") {
-                      void handlePurchase(item.nPrice);
+      {isTelegram ? null : (
+        <HubPanel
+          subtitle="Shop items are read from the backend settings document."
+          title="Shop"
+        >
+          <View style={styles.list}>
+            {shopItems.length ? (
+              shopItems.map((item, index) => (
+                <View key={`${item.nPrice}-${index}`} style={styles.listCard}>
+                  <Text style={styles.itemTitle}>
+                    {formatChipCount(item.nChips as number)} chips
+                  </Text>
+                  <Text style={styles.itemBody}>
+                    Price point:{" "}
+                    {typeof item.nPrice === "number" ? item.nPrice : "--"}
+                  </Text>
+                  <GameButton
+                    disabled={
+                      !isAuthenticatedUser ||
+                      typeof item.nPrice !== "number" ||
+                      activePurchasePrice === item.nPrice
                     }
-                  }}
-                  subtitle="Calls the shared `/shop/buy` endpoint"
-                  tone="primary"
-                />
-              </View>
-            ))
-          ) : (
-            <HubNotice
-              message={
-                isAuthenticatedUser
-                  ? "No shop items were returned yet. That usually means the backend settings document is empty."
-                  : "Sign in to load live shop items."
-              }
-            />
-          )}
-        </View>
-      </HubPanel>
+                    label="Buy"
+                    onPress={() => {
+                      if (typeof item.nPrice === "number") {
+                        void handlePurchase(item.nPrice);
+                      }
+                    }}
+                    subtitle="Calls the shared `/shop/buy` endpoint"
+                    tone="primary"
+                  />
+                </View>
+              ))
+            ) : (
+              <HubNotice
+                message={
+                  isAuthenticatedUser
+                    ? "No shop items were returned yet. That usually means the backend settings document is empty."
+                    : "Sign in to load live shop items."
+                }
+              />
+            )}
+          </View>
+        </HubPanel>
+      )}
 
       <HubPanel
-        subtitle="Recent store activity appears here for connected hub accounts."
-        title="Transactions"
+        subtitle={
+          isTelegram
+            ? "Virtual-chip activity appears here for connected hub accounts."
+            : "Recent store activity appears here for connected hub accounts."
+        }
+        title={isTelegram ? "Activity" : "Transactions"}
       >
         <View style={styles.list}>
           {transactions.length ? (
@@ -190,7 +205,7 @@ export function WalletScreen() {
           )}
         </View>
         <GameButton
-          label="Refresh Store"
+          label={isTelegram ? "Refresh Chips" : "Refresh Store"}
           onPress={() => {
             void Promise.all([refreshProfile(), loadWalletData()]);
           }}

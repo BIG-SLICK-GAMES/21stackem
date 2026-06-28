@@ -19,8 +19,10 @@ import { ScreenContainer } from "../components/layout/ScreenContainer";
 import { stackemRoutes } from "../navigation/routes";
 import { hubStackemApi } from "../platform/api/stackem";
 import { useHubSession } from "../platform/auth/session";
+import { TELEGRAM_VIRTUAL_CHIP_NOTICE } from "../platform/compliance/virtual-chips";
 import { formatChipCount } from "../platform/lib/format";
 import { openBigSlickGamesWebsite } from "../platform/lib/external-links";
+import { useTelegramMiniApp } from "../platform/telegram/mini-app";
 import { fireHaptic } from "../services/haptics";
 import { useGameSettings } from "../store/game-settings";
 import { theme } from "../theme";
@@ -227,6 +229,7 @@ export function HomeScreen() {
   const { settings } = useGameSettings();
   const { currentProduct, logout, profile, status, token } = useHubSession();
   const [activeMenu, setActiveMenu] = useState<AppNavKey>("game");
+  const { isTelegram } = useTelegramMiniApp();
   const [selectedMode, setSelectedMode] = useState<EntryMode>("classic");
   const [selectedDifficulty, setSelectedDifficulty] = useState<EntryDifficulty>("easy");
   const [showPayoutRules, setShowPayoutRules] = useState(false);
@@ -249,6 +252,12 @@ export function HomeScreen() {
   const balanceCounter = useRef(new Animated.Value(0)).current;
   const [displayBalance, setDisplayBalance] = useState("0");
   const hasMounted = useRef(false);
+
+  useEffect(() => {
+    if (isTelegram && activeMenu === "store") {
+      setActiveMenu("game");
+    }
+  }, [activeMenu, isTelegram]);
 
   useEffect(() => {
     let active = true;
@@ -982,6 +991,16 @@ export function HomeScreen() {
   }
 
   function renderStorePanel() {
+    if (isTelegram) {
+      return renderSimplePanel(
+        "CHIPS",
+        TELEGRAM_VIRTUAL_CHIP_NOTICE,
+        "poker-chip",
+        "Open Terms",
+        stackemRoutes.terms
+      );
+    }
+
     return (
       <>
         <View style={styles.sectionHeader}>

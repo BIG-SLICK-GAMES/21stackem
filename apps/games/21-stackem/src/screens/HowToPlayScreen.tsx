@@ -2,6 +2,7 @@ import { Href, router } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 
 import { ScreenContainer } from "../components/layout/ScreenContainer";
+import { VIRTUAL_CHIP_NOTICE } from "../platform/compliance/virtual-chips";
 import { theme } from "../theme";
 
 const RULES = [
@@ -28,6 +29,10 @@ const RULES = [
   {
     body: "Undo rewinds the last move. X2 doubles new 21 payouts for 10 seconds and recharges in 40 seconds. Lightning cashes all current 21s for 1.5x and recharges in 60 seconds.",
     title: "Power-Ups"
+  },
+  {
+    body: VIRTUAL_CHIP_NOTICE,
+    title: "Virtual Chips"
   }
 ];
 
@@ -41,10 +46,10 @@ export function HowToPlayScreen() {
           The current run format, scoring, special tiles, and power-ups all in one place.
         </Text>
         <Pressable
-          onPress={() => router.push("/play" as Href)}
+          onPress={() => router.push("/terms" as Href)}
           style={({ pressed }) => [styles.heroAction, pressed && styles.heroActionPressed]}
         >
-          <Text style={styles.heroActionText}>Back To Game</Text>
+          <Text style={styles.heroActionText}>Virtual Chip Terms</Text>
         </Pressable>
       </View>
 

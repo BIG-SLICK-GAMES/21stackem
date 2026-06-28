@@ -6,6 +6,8 @@ import { AppNav } from "../components/layout/AppNav";
 import { OptionGroup } from "../components/ui/OptionGroup";
 import { getStackemAppearance } from "../game/appearance";
 import { useDeviceProfile } from "../hooks/useDeviceProfile";
+import { stackemRoutes } from "../navigation/routes";
+import { VIRTUAL_CHIP_NOTICE } from "../platform/compliance/virtual-chips";
 import { useGameSettings } from "../store/game-settings";
 import {
   BoardPaletteKey,
@@ -186,6 +188,17 @@ export function SettingsScreen() {
           style={({ pressed }) => [styles.rulesButton, pressed && styles.rulesButtonPressed]}
         >
           <Text style={styles.rulesButtonLabel}>Open Rules</Text>
+        </Pressable>
+      </View>
+
+      <View style={[styles.section, isWide && styles.sectionWide]}>
+        <Text style={styles.sectionTitle}>Virtual chip terms</Text>
+        <Text style={styles.sectionText}>{VIRTUAL_CHIP_NOTICE}</Text>
+        <Pressable
+          onPress={() => router.push(stackemRoutes.terms as Href)}
+          style={({ pressed }) => [styles.rulesButton, pressed && styles.rulesButtonPressed]}
+        >
+          <Text style={styles.rulesButtonLabel}>Open Terms</Text>
         </Pressable>
       </View>
 
