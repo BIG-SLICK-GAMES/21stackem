@@ -266,27 +266,27 @@ function useStackemAppearance() {
 
 function getBlockTileSurface(tile: StackTile): [string, string, string] {
   if (tile.kind === "wild") {
-    return ["#ffe45c", "#f5a400", "#ad6500"];
+    return ["#fffbe8", "#d7b85f", "#6f5b2b"];
   }
 
   if (tile.kind === "swap") {
-    return ["#d98cff", "#8b3df2", "#4f1aa6"];
+    return ["#f8f4ff", "#a894dc", "#4f4184"];
   }
 
   const rankSurfaces: Record<StandardTileRank, [string, string, string]> = {
-    A: ["#ffe36e", "#f6c514", "#b88700"],
-    "2": ["#6bb8ff", "#1f75d6", "#0b3f8a"],
-    "3": ["#ff6b64", "#d82424", "#7f1111"],
-    "4": ["#b785ff", "#6c35c9", "#32106f"],
-    "5": ["#ffae55", "#f07a18", "#9c3d00"],
-    "6": ["#74df82", "#239c3b", "#0e5f22"],
-    "7": ["#b74855", "#7a1824", "#3f0810"],
-    "8": ["#4c5665", "#111827", "#020617"],
-    "9": ["#fff4aa", "#f6c514", "#b88700"],
-    "10": ["#d8ecff", "#1f75d6", "#0b3f8a"],
-    J: ["#ffe1df", "#d82424", "#7f1111"],
-    Q: ["#eadcff", "#6c35c9", "#32106f"],
-    K: ["#ffe0bd", "#f07a18", "#9c3d00"]
+    A: ["#fffbdc", "#d7b85f", "#6f5b2b"],
+    "2": ["#edf8ff", "#6fa8d8", "#24537c"],
+    "3": ["#ffefef", "#d87373", "#7b2f35"],
+    "4": ["#f7f1ff", "#9b82d9", "#493a82"],
+    "5": ["#fff4e8", "#d89a62", "#7a4822"],
+    "6": ["#eefff7", "#6fbf9a", "#2d6752"],
+    "7": ["#ffeef3", "#bd7184", "#673044"],
+    "8": ["#f4f8fc", "#8ea0b7", "#344356"],
+    "9": ["#fffde5", "#d2bd72", "#6f5e2d"],
+    "10": ["#effbff", "#83bedc", "#2d6080"],
+    J: ["#fff1f1", "#d78686", "#773439"],
+    Q: ["#f8f4ff", "#a894dc", "#4f4184"],
+    K: ["#fff5eb", "#d9a36e", "#794c27"]
   };
 
   return rankSurfaces[tile.rank as StandardTileRank];
@@ -3829,7 +3829,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   },
   bannerAnteValue: {
-    color: "#ffd678",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.display,
     fontSize: 22,
     lineHeight: 22
@@ -3839,10 +3839,10 @@ const styles = StyleSheet.create({
     overflow: "hidden"
   },
   bannerScoreBar: {
-    backgroundColor: "rgba(5, 18, 30, 0.96)",
-    borderColor: "rgba(105, 150, 190, 0.56)",
+    backgroundColor: "rgba(20, 34, 48, 0.9)",
+    borderColor: "rgba(133, 169, 195, 0.44)",
     borderWidth: 2,
-    shadowColor: "#7ecbff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.16,
     shadowRadius: 18
@@ -4067,7 +4067,7 @@ const styles = StyleSheet.create({
     minWidth: 0
   },
   bannerHeaderValue: {
-    color: "#ffd678",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.bodyBold,
     fontSize: 22
   },
@@ -4295,7 +4295,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     overflow: "visible",
     position: "relative",
-    shadowColor: "#7ecbff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.16,
     shadowRadius: 22
@@ -4450,7 +4450,7 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   cellDense: { padding: 2 },
-  cellHovered: { backgroundColor: "rgba(42, 52, 82, 0.96)", borderColor: "rgba(255, 176, 46, 0.82)" },
+  cellHovered: { backgroundColor: "rgba(42, 52, 82, 0.96)", borderColor: "rgba(111, 168, 216, 0.82)" },
   cellLightningGlow: {
     backgroundColor: "rgba(168, 233, 255, 0.34)",
     borderRadius: 999,
@@ -4488,7 +4488,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(34, 197, 94, 0.18)",
     borderColor: "rgba(74, 222, 128, 0.74)"
   },
-  cellPlayable: { borderColor: "rgba(255, 176, 46, 0.58)" },
+  cellPlayable: { borderColor: "rgba(111, 168, 216, 0.58)" },
   cellPressed: { opacity: 0.86 },
   cellQuakeStack: {
     backgroundColor: "rgba(30, 52, 70, 0.92)",
@@ -4883,7 +4883,7 @@ const styles = StyleSheet.create({
   safe: { flex: 1 },
   sideCard: {
     gap: theme.spacing.sm,
-    shadowColor: "#7ecbff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.14,
     shadowRadius: 18
@@ -5863,10 +5863,10 @@ const styles = StyleSheet.create({
     textShadowRadius: 2
   },
   tileRankSpecial: {
-    color: "#ffd678"
+    color: "#d7ecfb"
   },
   tileSpecial: {
-    borderColor: "rgba(255, 214, 120, 0.5)"
+    borderColor: "rgba(215, 236, 251, 0.5)"
   },
   tileSpecialMeta: {
     color: "rgba(255, 246, 220, 0.82)",

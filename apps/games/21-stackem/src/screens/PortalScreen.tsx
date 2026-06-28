@@ -81,7 +81,7 @@ export function PortalScreen() {
         </View>
         <View style={styles.backendPill}>
           <MaterialCommunityIcons
-            color="#9edfff"
+            color="#d7ecfb"
             name="server-network"
             size={15}
           />
@@ -236,7 +236,7 @@ function PortalStat({
 }) {
   return (
     <View style={styles.stat}>
-      <MaterialCommunityIcons color="#f4c45f" name={icon} size={18} />
+      <MaterialCommunityIcons color="#d7ecfb" name={icon} size={18} />
       <View>
         <Text style={styles.statLabel}>{label}</Text>
         <Text style={styles.statValue}>{value}</Text>
@@ -271,7 +271,7 @@ const styles = StyleSheet.create({
   },
   avatar: {
     alignItems: "center",
-    backgroundColor: "#f4c45f",
+    backgroundColor: "#6fa8d8",
     borderRadius: 28,
     height: 56,
     justifyContent: "center",
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     width: "100%"
   },
   domain: {
-    color: "#f4c45f",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.label,
     fontSize: 12,
     letterSpacing: 1,

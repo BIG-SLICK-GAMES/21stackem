@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
   },
   outerSelected: {
     borderColor: "rgba(158, 223, 255, 0.7)",
-    shadowColor: "#9edfff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.6,
     shadowRadius: 18

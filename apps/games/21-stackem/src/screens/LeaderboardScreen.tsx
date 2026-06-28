@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     elevation: 7,
     gap: theme.spacing.xs,
     padding: theme.spacing.md,
-    shadowColor: "#7ecbff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 12, width: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 22,

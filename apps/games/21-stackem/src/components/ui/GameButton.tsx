@@ -49,7 +49,7 @@ export function GameButton({
     >
       {tone === "primary" ? (
         <LinearGradient
-          colors={["#6ec4f1", "#1e5a9e"]}
+          colors={["#effbff", "#6fa8d8", "#2d6080"]}
           end={{ x: 1, y: 1 }}
           start={{ x: 0, y: 0 }}
           style={styles.gradientFill}
@@ -124,7 +124,7 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.md
   },
   primary: {
-    shadowColor: "#7ecbff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.3,
     shadowRadius: 18,
@@ -134,8 +134,8 @@ const styles = StyleSheet.create({
     opacity: 0.88
   },
   secondary: {
-    backgroundColor: "rgba(7, 24, 40, 0.88)",
-    borderColor: "rgba(84, 130, 171, 0.62)",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.5)",
     borderWidth: 2,
     paddingHorizontal: theme.spacing.lg,
     paddingVertical: theme.spacing.md,
@@ -146,7 +146,7 @@ const styles = StyleSheet.create({
     elevation: 4
   },
   secondaryPressed: {
-    backgroundColor: theme.colors.cardMuted
+    backgroundColor: "rgba(111, 168, 216, 0.22)"
   },
   disabled: {
     opacity: 0.5

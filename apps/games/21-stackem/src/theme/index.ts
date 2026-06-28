@@ -2,22 +2,22 @@ import { Platform } from "react-native";
 
 export const theme = {
   colors: {
-    background: "#020b13",
-    backgroundAlt: "#071c2c",
-    card: "rgba(7, 24, 38, 0.84)",
-    cardMuted: "rgba(20, 56, 84, 0.78)",
-    border: "rgba(118, 169, 207, 0.44)",
-    surface: "#5fa7e7",
-    surfacePressed: "#347ec0",
-    accent: "#9edfff",
+    background: "#172433",
+    backgroundAlt: "#101d2b",
+    card: "rgba(20, 34, 48, 0.84)",
+    cardMuted: "rgba(30, 52, 70, 0.78)",
+    border: "rgba(133, 169, 195, 0.44)",
+    surface: "#6fa8d8",
+    surfacePressed: "#416c91",
+    accent: "#d7ecfb",
     text: "#f5f8ff",
     subtleText: "#9fb7ca",
-    warning: "#ffcc73",
-    joystickBase: "rgba(58, 111, 156, 0.28)",
-    joystickKnob: "#8bd2ff",
-    player: "#8bd2ff",
-    orb: "#ffd678",
-    hazard: "#ff6f7f"
+    warning: "#d89a62",
+    joystickBase: "rgba(111, 168, 216, 0.24)",
+    joystickKnob: "#d7ecfb",
+    player: "#d7ecfb",
+    orb: "#6fa8d8",
+    hazard: "#d87373"
   },
   spacing: {
     xs: 6,

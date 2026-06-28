@@ -27,15 +27,15 @@ export function HubPanel({
 
 const styles = StyleSheet.create({
   panel: {
-    backgroundColor: "rgba(5, 18, 30, 0.92)",
-    borderColor: "rgba(105, 150, 190, 0.56)",
+    backgroundColor: "rgba(20, 34, 48, 0.86)",
+    borderColor: "rgba(133, 169, 195, 0.42)",
     borderRadius: 30,
     borderWidth: 2,
     elevation: 7,
     gap: theme.spacing.md,
     overflow: "hidden",
     padding: theme.spacing.lg,
-    shadowColor: "#7ecbff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 12, width: 0 },
     shadowOpacity: 0.18,
     shadowRadius: 22

@@ -59,7 +59,7 @@ const styles = StyleSheet.create({
     width: 300
   },
   glowMagenta: {
-    backgroundColor: "rgba(255, 214, 120, 0.07)",
+    backgroundColor: "rgba(111, 168, 216, 0.08)",
     borderRadius: 240,
     height: 240,
     position: "absolute",

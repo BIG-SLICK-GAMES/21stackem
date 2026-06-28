@@ -64,7 +64,7 @@ const logoStyles = StyleSheet.create({
     fontSize: 52,
     letterSpacing: -2,
     lineHeight: 52,
-    textShadowColor: "#7ecbff",
+    textShadowColor: "#6fa8d8",
     textShadowOffset: { height: 0, width: 0 },
     textShadowRadius: 18
   },
@@ -554,7 +554,7 @@ export function HomeScreen() {
                 ]}
               >
                 <MaterialCommunityIcons
-                  color={showPayoutRules ? "#082033" : "#ffd678"}
+                  color={showPayoutRules ? "#f8fbff" : "#d7ecfb"}
                   name="information-variant"
                   size={15}
                 />
@@ -668,7 +668,7 @@ export function HomeScreen() {
           ]}
         >
           <LinearGradient
-            colors={["#6ec4f1", "#245f9e"]}
+            colors={["#effbff", "#6fa8d8", "#2d6080"]}
             end={{ x: 1, y: 1 }}
             start={{ x: 0, y: 0 }}
             style={styles.playButtonSurface}
@@ -1194,7 +1194,7 @@ function TutorialStep({
   return (
     <View style={styles.tutorialStep}>
       <View style={styles.tutorialStepIcon}>
-        <MaterialCommunityIcons color="#082033" name={icon} size={22} />
+        <MaterialCommunityIcons color="#f8fbff" name={icon} size={22} />
       </View>
       <Text style={styles.tutorialStepTitle}>{title}</Text>
       <Text style={styles.tutorialStepBody}>{body}</Text>
@@ -1232,7 +1232,7 @@ function MenuButton({
       ]}
     >
       <MaterialCommunityIcons
-        color={primary ? "#082033" : "#f7fbff"}
+        color="#f7fbff"
         name={icon}
         size={20}
       />
@@ -1247,8 +1247,8 @@ const styles = StyleSheet.create({
   accountCopy: { flex: 1, minWidth: 0 },
   accountPill: {
     alignItems: "center",
-    backgroundColor: "rgba(8, 23, 38, 0.96)",
-    borderColor: "rgba(92, 137, 177, 0.62)",
+    backgroundColor: "rgba(20, 34, 48, 0.96)",
+    borderColor: "rgba(133, 169, 195, 0.54)",
     borderRadius: 42,
     borderWidth: 2,
     flex: 1,
@@ -1265,8 +1265,8 @@ const styles = StyleSheet.create({
   anteBlock: { gap: 10 },
   antePill: {
     alignItems: "center",
-    backgroundColor: "rgba(7, 24, 40, 0.92)",
-    borderColor: "rgba(84, 130, 171, 0.62)",
+    backgroundColor: "rgba(20, 34, 48, 0.92)",
+    borderColor: "rgba(133, 169, 195, 0.5)",
     borderRadius: 999,
     borderWidth: 2,
     flex: 1,
@@ -1274,8 +1274,8 @@ const styles = StyleSheet.create({
     justifyContent: "center"
   },
   antePillSelected: {
-    backgroundColor: "#ffd678",
-    borderColor: "#fff0bd"
+    backgroundColor: "#6fa8d8",
+    borderColor: "#d7ecfb"
   },
   anteRow: { flexDirection: "row", gap: 10 },
   anteText: {
@@ -1284,7 +1284,7 @@ const styles = StyleSheet.create({
     fontSize: 22,
     lineHeight: 24
   },
-  anteTextSelected: { color: "#082033" },
+  anteTextSelected: { color: "#f8fbff" },
   anteTitle: {
     color: "#b8cee0",
     fontFamily: theme.fonts.label,
@@ -1293,7 +1293,7 @@ const styles = StyleSheet.create({
   },
   avatar: {
     alignItems: "center",
-    borderColor: "#9edfff",
+    borderColor: "#d7ecfb",
     borderRadius: 999,
     borderWidth: 2,
     height: 46,
@@ -1307,7 +1307,7 @@ const styles = StyleSheet.create({
     lineHeight: 26
   },
   balance: {
-    color: "#ffd678",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.display,
     fontSize: 28,
     lineHeight: 30
@@ -1327,8 +1327,8 @@ const styles = StyleSheet.create({
   },
   boardPreview: {
     aspectRatio: 1,
-    backgroundColor: "rgba(12, 18, 35, 0.98)",
-    borderColor: "rgba(255, 176, 46, 0.42)",
+    backgroundColor: "rgba(16, 29, 43, 0.94)",
+    borderColor: "rgba(133, 169, 195, 0.36)",
     borderRadius: 18,
     borderWidth: 2,
     flex: 1,
@@ -1343,8 +1343,8 @@ const styles = StyleSheet.create({
   },
   boardPreviewCell: {
     alignItems: "center",
-    backgroundColor: "rgba(24, 32, 56, 0.94)",
-    borderColor: "rgba(255, 255, 255, 0.12)",
+    backgroundColor: "rgba(25, 42, 58, 0.86)",
+    borderColor: "rgba(103, 137, 163, 0.54)",
     borderRadius: 9,
     borderWidth: 1,
     flex: 1,
@@ -1352,7 +1352,7 @@ const styles = StyleSheet.create({
     minHeight: 0
   },
   boardPreviewMeta: {
-    color: "#ffd678",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.label,
     fontSize: 12,
     letterSpacing: 1,
@@ -1369,10 +1369,10 @@ const styles = StyleSheet.create({
     gap: 8
   },
   boardPreviewSeedCell: {
-    backgroundColor: "#ff8a21",
-    borderBottomColor: "#a83a06",
+    backgroundColor: "#6fa8d8",
+    borderBottomColor: "#2d6080",
     borderBottomWidth: 4,
-    borderColor: "#ffc266"
+    borderColor: "#d7ecfb"
   },
   boardPreviewSeedText: {
     color: "#ffffff",
@@ -1381,10 +1381,10 @@ const styles = StyleSheet.create({
     lineHeight: 24
   },
   boardPreviewTutorialCell: {
-    backgroundColor: "#3b82f6",
-    borderBottomColor: "#1d4ed8",
+    backgroundColor: "#83bedc",
+    borderBottomColor: "#2d6080",
     borderBottomWidth: 4,
-    borderColor: "#93c5fd"
+    borderColor: "#d7ecfb"
   },
   boardPreviewTutorialCellComplete: {
     backgroundColor: "#22c55e",
@@ -1411,8 +1411,8 @@ const styles = StyleSheet.create({
     width: 34
   },
   boardPreviewShell: {
-    backgroundColor: "rgba(9, 14, 28, 0.92)",
-    borderColor: "rgba(255, 176, 46, 0.28)",
+    backgroundColor: "rgba(20, 34, 48, 0.82)",
+    borderColor: "rgba(133, 169, 195, 0.34)",
     borderRadius: 22,
     borderWidth: 1.5,
     gap: 10,
@@ -1437,8 +1437,8 @@ const styles = StyleSheet.create({
   },
   difficultyPill: {
     alignItems: "center",
-    backgroundColor: "rgba(7, 24, 40, 0.88)",
-    borderColor: "rgba(84, 130, 171, 0.62)",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.52)",
     borderRadius: 999,
     borderWidth: 1.5,
     flex: 1,
@@ -1452,8 +1452,8 @@ const styles = StyleSheet.create({
     gap: 8
   },
   difficultyPillSelected: {
-    backgroundColor: "#ff8a21",
-    borderColor: "#ffc266"
+    backgroundColor: "#6fa8d8",
+    borderColor: "#d7ecfb"
   },
   difficultyPillText: {
     color: "#f7fbff",
@@ -1467,8 +1467,8 @@ const styles = StyleSheet.create({
   },
   infoButton: {
     alignItems: "center",
-    backgroundColor: "rgba(255, 214, 120, 0.1)",
-    borderColor: "rgba(255, 214, 120, 0.38)",
+    backgroundColor: "rgba(111, 168, 216, 0.14)",
+    borderColor: "rgba(142, 179, 206, 0.42)",
     borderRadius: 999,
     borderWidth: 1,
     height: 24,
@@ -1476,8 +1476,8 @@ const styles = StyleSheet.create({
     width: 24
   },
   infoButtonActive: {
-    backgroundColor: "#ffd678",
-    borderColor: "#fff0bd"
+    backgroundColor: "#6fa8d8",
+    borderColor: "#d7ecfb"
   },
   infoButtonPressed: {
     opacity: 0.78
@@ -1488,8 +1488,8 @@ const styles = StyleSheet.create({
   },
   authButton: {
     alignItems: "center",
-    backgroundColor: "#245f9e",
-    borderColor: "#9edfff",
+    backgroundColor: "#416c91",
+    borderColor: "#d7ecfb",
     borderRadius: 18,
     borderWidth: 1.5,
     flex: 1,
@@ -1501,8 +1501,8 @@ const styles = StyleSheet.create({
   },
   authButtonSecondary: {
     alignItems: "center",
-    backgroundColor: "rgba(7, 24, 40, 0.88)",
-    borderColor: "rgba(84, 130, 171, 0.62)",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.52)",
     borderRadius: 18,
     borderWidth: 1.5,
     flex: 1,
@@ -1520,8 +1520,8 @@ const styles = StyleSheet.create({
   },
   ecosystemAction: {
     alignItems: "center",
-    backgroundColor: "rgba(7, 24, 40, 0.88)",
-    borderColor: "rgba(84, 130, 171, 0.56)",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.4)",
     borderRadius: 18,
     borderWidth: 1.5,
     flexBasis: "48%",
@@ -1564,8 +1564,8 @@ const styles = StyleSheet.create({
     lineHeight: 15
   },
   ecosystemPanel: {
-    backgroundColor: "rgba(5, 18, 30, 0.92)",
-    borderColor: "rgba(105, 150, 190, 0.56)",
+    backgroundColor: "rgba(20, 34, 48, 0.82)",
+    borderColor: "rgba(133, 169, 195, 0.42)",
     borderRadius: 26,
     borderWidth: 2,
     gap: 12,
@@ -1581,13 +1581,13 @@ const styles = StyleSheet.create({
     padding: 10
   },
   lobbyFrame: {
-    borderColor: "rgba(255, 176, 46, 0.62)",
+    borderColor: "rgba(133, 169, 195, 0.56)",
     borderRadius: 36,
     borderWidth: 2,
     elevation: 10,
     overflow: "hidden",
     padding: 8,
-    shadowColor: "#ffb02e",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 16, width: 0 },
     shadowOpacity: 0.22,
     shadowRadius: 26
@@ -1601,8 +1601,8 @@ const styles = StyleSheet.create({
   },
   menuButton: {
     alignItems: "center",
-    backgroundColor: "rgba(7, 24, 40, 0.88)",
-    borderColor: "rgba(84, 130, 171, 0.62)",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.52)",
     borderRadius: 18,
     borderWidth: 1.5,
     flex: 1,
@@ -1614,8 +1614,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12
   },
   menuButtonPrimary: {
-    backgroundColor: "#ff8a21",
-    borderColor: "#ffc266"
+    backgroundColor: "#6fa8d8",
+    borderColor: "#d7ecfb"
   },
   menuButtonText: {
     color: "#f7fbff",
@@ -1628,8 +1628,8 @@ const styles = StyleSheet.create({
     color: "#ffffff"
   },
   menuPanel: {
-    backgroundColor: "rgba(9, 14, 28, 0.94)",
-    borderColor: "rgba(255, 176, 46, 0.34)",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.38)",
     borderRadius: 34,
     borderWidth: 2,
     elevation: 7,
@@ -1637,14 +1637,14 @@ const styles = StyleSheet.create({
     minHeight: 360,
     paddingHorizontal: 18,
     paddingVertical: 20,
-    shadowColor: "#ffb02e",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 12, width: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 22
   },
   menuStat: {
-    backgroundColor: "rgba(7, 24, 40, 0.88)",
-    borderColor: "rgba(84, 130, 171, 0.5)",
+    backgroundColor: "rgba(16, 29, 43, 0.74)",
+    borderColor: "rgba(133, 169, 195, 0.34)",
     borderRadius: 16,
     borderWidth: 1,
     flex: 1,
@@ -1688,7 +1688,7 @@ const styles = StyleSheet.create({
     borderRadius: 999,
     elevation: 5,
     overflow: "hidden",
-    shadowColor: "#ff8a21",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 10, width: 0 },
     shadowOpacity: 0.28,
     shadowRadius: 18
@@ -1727,8 +1727,8 @@ const styles = StyleSheet.create({
     lineHeight: 28
   },
   payoutRulesCard: {
-    backgroundColor: "rgba(255, 214, 120, 0.08)",
-    borderColor: "rgba(255, 214, 120, 0.24)",
+    backgroundColor: "rgba(111, 168, 216, 0.1)",
+    borderColor: "rgba(142, 179, 206, 0.26)",
     borderRadius: 16,
     borderWidth: 1,
     paddingHorizontal: 12,
@@ -1748,7 +1748,7 @@ const styles = StyleSheet.create({
     lineHeight: 19
   },
   tutorialBandTitle: {
-    color: "#ffd678",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.bodyBold,
     fontSize: 15
   },
@@ -1805,15 +1805,15 @@ const styles = StyleSheet.create({
     minWidth: 0
   },
   tutorialInfoBand: {
-    backgroundColor: "rgba(7, 24, 40, 0.78)",
-    borderColor: "rgba(84, 130, 171, 0.42)",
+    backgroundColor: "rgba(20, 34, 48, 0.78)",
+    borderColor: "rgba(133, 169, 195, 0.36)",
     borderRadius: 16,
     borderWidth: 1,
     gap: 7,
     padding: 14
   },
   tutorialKicker: {
-    color: "#ffd678",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.label,
     fontSize: 11,
     letterSpacing: 1.2,
@@ -1869,14 +1869,14 @@ const styles = StyleSheet.create({
     paddingVertical: 10
   },
   tutorialPayoutRowActive: {
-    backgroundColor: "rgba(255, 214, 120, 0.12)",
-    borderColor: "rgba(255, 214, 120, 0.48)"
+    backgroundColor: "rgba(111, 168, 216, 0.14)",
+    borderColor: "rgba(215, 236, 251, 0.48)"
   },
   tutorialPayoutTable: {
     gap: 8
   },
   tutorialPayoutValue: {
-    color: "#ffd678",
+    color: "#d7ecfb",
     fontFamily: theme.fonts.display,
     fontSize: 16,
     lineHeight: 18
@@ -1915,7 +1915,7 @@ const styles = StyleSheet.create({
   },
   tutorialStepIcon: {
     alignItems: "center",
-    backgroundColor: "#ffd678",
+    backgroundColor: "#6fa8d8",
     borderRadius: 999,
     height: 34,
     justifyContent: "center",
@@ -1941,7 +1941,7 @@ const styles = StyleSheet.create({
   },
   profileAvatar: {
     alignItems: "center",
-    borderColor: "#9edfff",
+    borderColor: "#d7ecfb",
     borderRadius: 999,
     borderWidth: 2,
     height: 72,
@@ -2205,7 +2205,7 @@ const styles = StyleSheet.create({
     minWidth: 62,
     paddingVertical: 8
   },
-  seedBadgeSelected: { backgroundColor: "#ff8a21", borderColor: "#ffc266" },
+  seedBadgeSelected: { backgroundColor: "#6fa8d8", borderColor: "#d7ecfb" },
   seedText: {
     color: theme.colors.subtleText,
     fontFamily: theme.fonts.label,
@@ -2220,15 +2220,15 @@ const styles = StyleSheet.create({
   },
   seedValueSelected: { color: "#ffffff" },
   setupPanel: {
-    backgroundColor: "rgba(5, 18, 30, 0.92)",
-    borderColor: "rgba(105, 150, 190, 0.56)",
+    backgroundColor: "rgba(20, 34, 48, 0.86)",
+    borderColor: "rgba(133, 169, 195, 0.42)",
     borderRadius: 34,
     borderWidth: 2,
     elevation: 7,
     gap: 18,
     paddingHorizontal: 18,
     paddingVertical: 20,
-    shadowColor: "#7ecbff",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 12, width: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 22

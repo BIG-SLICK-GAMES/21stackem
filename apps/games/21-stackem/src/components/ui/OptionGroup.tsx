@@ -41,8 +41,8 @@ const styles = StyleSheet.create({
     gap: theme.spacing.sm
   },
   option: {
-    backgroundColor: "rgba(7, 24, 40, 0.88)",
-    borderColor: "rgba(84, 130, 171, 0.62)",
+    backgroundColor: "rgba(20, 34, 48, 0.88)",
+    borderColor: "rgba(133, 169, 195, 0.52)",
     borderRadius: 999,
     borderWidth: 2,
     minWidth: 0,
@@ -50,9 +50,9 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm
   },
   optionSelected: {
-    backgroundColor: "#ffd678",
-    borderColor: "#fff0bd",
-    shadowColor: "#ffd678",
+    backgroundColor: "#6fa8d8",
+    borderColor: "#d7ecfb",
+    shadowColor: "#6fa8d8",
     shadowOffset: { width: 0, height: 8 },
     shadowOpacity: 0.28,
     shadowRadius: 14,
@@ -69,6 +69,6 @@ const styles = StyleSheet.create({
     textAlign: "center"
   },
   optionLabelSelected: {
-    color: "#082033"
+    color: "#f8fbff"
   }
 });
