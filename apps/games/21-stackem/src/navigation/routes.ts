@@ -6,5 +6,6 @@ export const stackemRoutes = {
   profile: "/profile",
   rewards: "/rewards",
   settings: "/settings",
-  social: "/social"
+  store: "/wallet",
+  wallet: "/wallet"
 } as const;

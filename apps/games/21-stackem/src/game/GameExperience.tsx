@@ -2172,14 +2172,14 @@ export function GameExperience() {
           <Pressable
             onPress={() => {
               setMenuOpen(false);
-              router.push(stackemRoutes.profile);
+              router.push(stackemRoutes.store);
             }}
             style={({ pressed }) => [
               styles.bannerMenuMiniButton,
               pressed && styles.bannerMenuButtonPressed
             ]}
           >
-            <Text style={styles.bannerMenuMiniLabel}>Profile</Text>
+            <Text style={styles.bannerMenuMiniLabel}>Store</Text>
           </Pressable>
           <Pressable
             onPress={() => {

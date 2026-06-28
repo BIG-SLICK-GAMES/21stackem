@@ -12,8 +12,7 @@ export type AppNavKey =
   | "game"
   | "daily"
   | "leaderboards"
-  | "profile"
-  | "social"
+  | "store"
   | "settings";
 
 const NAV_ITEMS: Array<{
@@ -25,12 +24,11 @@ const NAV_ITEMS: Array<{
   { icon: "cards-playing", key: "game", path: stackemRoutes.lobby },
   { icon: "gift", key: "daily", path: stackemRoutes.rewards },
   { icon: "trophy", key: "leaderboards", path: stackemRoutes.leaderboard },
-  { icon: "account-circle", key: "profile", path: stackemRoutes.profile },
-  { icon: "share-variant", key: "social", path: stackemRoutes.social },
+  { icon: "storefront", key: "store", path: stackemRoutes.store },
   {
     icon: "cog",
     key: "settings",
-    path: { pathname: stackemRoutes.profile, params: { section: "settings" } }
+    path: stackemRoutes.settings
   }
 ];
 
@@ -38,8 +36,8 @@ const PATH_TO_KEY: Record<string, AppNavKey> = {
   [String(stackemRoutes.lobby)]: "game",
   [String(stackemRoutes.rewards)]: "daily",
   [String(stackemRoutes.leaderboard)]: "leaderboards",
-  [String(stackemRoutes.profile)]: "profile",
-  [String(stackemRoutes.social)]: "social",
+  [String(stackemRoutes.profile)]: "store",
+  [String(stackemRoutes.store)]: "store",
   [String(stackemRoutes.settings)]: "settings"
 };
 

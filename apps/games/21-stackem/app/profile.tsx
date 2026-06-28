@@ -1,3 +1,3 @@
-import { ProfileScreen } from "../src/screens/ProfileScreen";
+import { WalletScreen } from "../src/screens/WalletScreen";
 
-export default ProfileScreen;
+export default WalletScreen;

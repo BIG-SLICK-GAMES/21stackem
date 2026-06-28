@@ -71,14 +71,7 @@ export function HubScreen() {
             subtitle="Login or register a shared account"
           />
           <GameButton
-            label="Profile"
-            onPress={() => {
-              router.push("/profile" as Href);
-            }}
-            subtitle="Edit the shared user record and player settings"
-          />
-          <GameButton
-            label="Wallet"
+            label="Store"
             onPress={() => {
               router.push("/wallet" as Href);
             }}

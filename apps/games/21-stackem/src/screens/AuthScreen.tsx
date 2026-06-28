@@ -259,7 +259,7 @@ export function AuthScreen() {
           sPassword: password
         });
         setSuccess("Signed in.");
-        router.replace("/profile" as Href);
+        router.replace("/wallet" as Href);
         return;
       }
 
@@ -520,11 +520,11 @@ export function AuthScreen() {
         <View style={styles.buttonRow}>
           <GameButton
             disabled={!isLoggedIn}
-            label="Open Profile"
+            label="Open Store"
             onPress={() => {
-              router.push("/profile" as Href);
+              router.push("/wallet" as Href);
             }}
-            subtitle="Inspect the shared player profile"
+            subtitle="Open chips, shop, and store activity"
             tone="primary"
           />
           <GameButton

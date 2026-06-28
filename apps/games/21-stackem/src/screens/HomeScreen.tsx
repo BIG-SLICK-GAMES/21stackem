@@ -980,15 +980,15 @@ export function HomeScreen() {
     );
   }
 
-  function renderProfilePanel() {
+  function renderStorePanel() {
     return (
       <>
         <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>PROFILE</Text>
+          <Text style={styles.sectionTitle}>STORE</Text>
           <Text style={styles.sectionMeta}>
             {status === "authenticated"
-              ? "Shared player profile"
-              : "Sign in to load your saved profile"}
+              ? "Chip balance, shop, and wallet activity"
+              : "Local play has 10,000 chips. Sign in to sync purchases."}
           </Text>
         </View>
 
@@ -1003,24 +1003,24 @@ export function HomeScreen() {
               {playerName}
             </Text>
             <Text numberOfLines={1} style={styles.profilePreviewMeta}>
-              {profile?.sEmail ?? "No account loaded"}
+              {status === "authenticated" ? profile?.sEmail ?? "Store account loaded" : "Local store preview"}
             </Text>
           </View>
         </View>
 
         <View style={styles.menuStatGrid}>
+          <MenuStat label="Chips" value={formatChipCount(profile?.nChips ?? 10000)} />
           <MenuStat label="Session" value={status.toUpperCase()} />
-          <MenuStat label="Chips" value={formatChipCount(profile?.nChips)} />
-          <MenuStat label="Games" value={String(Number(profile?.nGamePlayed) || 0)} />
-          <MenuStat label="Wins" value={String(Number(profile?.nGameWon) || 0)} />
+          <MenuStat label="Daily" value={selectedPlayCostLabel} />
+          <MenuStat label="Store" value={status === "authenticated" ? "LIVE" : "LOCAL"} />
         </View>
 
         {status === "authenticated" ? (
           <View style={styles.menuActionRow}>
             <MenuButton
-              icon="account-edit"
-              label="Edit Profile"
-              onPress={() => navigate(stackemRoutes.profile)}
+              icon="storefront"
+              label="Open Store"
+              onPress={() => navigate(stackemRoutes.store)}
               primary
             />
             <MenuButton
@@ -1034,18 +1034,16 @@ export function HomeScreen() {
         ) : (
           <View style={styles.menuActionRow}>
             <MenuButton
+              icon="storefront"
+              label="Open Store"
+              onPress={() => navigate(stackemRoutes.store)}
+              primary
+            />
+            <MenuButton
               icon="login"
               label="Sign In"
               onPress={() =>
                 navigate({ pathname: stackemRoutes.auth, params: { mode: "login" } } as Href)
-              }
-              primary
-            />
-            <MenuButton
-              icon="account-plus"
-              label="Create"
-              onPress={() =>
-                navigate({ pathname: stackemRoutes.auth, params: { mode: "register" } } as Href)
               }
             />
           </View>
@@ -1091,18 +1089,8 @@ export function HomeScreen() {
   }
 
   function renderActivePanel() {
-    if (activeMenu === "profile") {
-      return renderProfilePanel();
-    }
-
-    if (activeMenu === "social") {
-      return renderSimplePanel(
-        "SOCIAL",
-        "Record, post, tag friends, and earn promo chips",
-        "share-variant",
-        "Open Social",
-        stackemRoutes.social
-      );
+    if (activeMenu === "store") {
+      return renderStorePanel();
     }
 
     if (activeMenu === "daily") {

@@ -173,10 +173,10 @@ export function PortalScreen() {
                 />
                 <View style={styles.secondaryActions}>
                   <SmallAction
-                    icon="account-circle"
-                    label="Profile"
+                    icon="storefront"
+                    label="Store"
                     onPress={() => {
-                      router.push(stackemRoutes.profile);
+                      router.push(stackemRoutes.store);
                     }}
                   />
                   <SmallAction

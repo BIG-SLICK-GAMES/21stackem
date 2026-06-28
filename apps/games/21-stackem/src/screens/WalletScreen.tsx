@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { StyleSheet, Text, View } from "react-native";
 
-import { HubAccessGate } from "../components/platform/HubAccessGate";
 import { HubNotice } from "../components/platform/HubNotice";
 import { HubPanel } from "../components/platform/HubPanel";
 import { ScreenContainer } from "../components/layout/ScreenContainer";
@@ -67,22 +66,6 @@ export function WalletScreen() {
     void loadWalletData();
   }, [status, token]);
 
-  if (!token) {
-    return (
-      <ScreenContainer contentContainerStyle={styles.centered}>
-        <HubAccessGate message="Create a hub session before opening wallet features." />
-      </ScreenContainer>
-    );
-  }
-
-  if (status !== "authenticated") {
-    return (
-      <ScreenContainer contentContainerStyle={styles.centered}>
-        <HubAccessGate message="Wallet and transaction routes require a verified user account." />
-      </ScreenContainer>
-    );
-  }
-
   async function handlePurchase(nPrice: number) {
     if (!token) {
       return;
@@ -107,20 +90,27 @@ export function WalletScreen() {
     <ScreenContainer scroll contentContainerStyle={styles.content}>
       <AppNav />
       <HubPanel
-        subtitle="Wallet state comes from the shared hub user record and transaction collection."
-        title="Wallet"
+        subtitle={
+          isAuthenticatedUser
+            ? "Store balance comes from the shared hub user record and transaction collection."
+            : "Local store preview. Sign in to sync purchases and transaction history."
+        }
+        title="Store"
       >
         <View style={styles.balanceCard}>
           <Text style={styles.balanceLabel}>Available chips</Text>
           <Text style={styles.balanceValue}>
-            {formatChipCount(profile?.nChips)}
+            {formatChipCount(profile?.nChips ?? 10000)}
           </Text>
           <Text style={styles.balanceText}>
             This balance should be reusable across games that share the same
             backend user.
           </Text>
         </View>
-        {isLoading ? <HubNotice message="Refreshing wallet data..." /> : null}
+        {isLoading ? <HubNotice message="Refreshing store data..." /> : null}
+        {!isAuthenticatedUser ? (
+          <HubNotice message="Local mode is active. Purchases are disabled until a hub account is connected." />
+        ) : null}
         {error ? <HubNotice message={error} tone="error" /> : null}
         {success ? <HubNotice message={success} tone="success" /> : null}
       </HubPanel>
@@ -158,13 +148,19 @@ export function WalletScreen() {
               </View>
             ))
           ) : (
-            <HubNotice message="No shop items were returned yet. That usually means the backend settings document is empty." />
+            <HubNotice
+              message={
+                isAuthenticatedUser
+                  ? "No shop items were returned yet. That usually means the backend settings document is empty."
+                  : "Sign in to load live shop items."
+              }
+            />
           )}
         </View>
       </HubPanel>
 
       <HubPanel
-        subtitle="Recent transaction history proves the frontend is reading from the shared wallet ledger."
+        subtitle="Recent store activity appears here for connected hub accounts."
         title="Transactions"
       >
         <View style={styles.list}>
@@ -194,7 +190,7 @@ export function WalletScreen() {
           )}
         </View>
         <GameButton
-          label="Refresh Wallet"
+          label="Refresh Store"
           onPress={() => {
             void Promise.all([refreshProfile(), loadWalletData()]);
           }}
@@ -232,10 +228,6 @@ const styles = StyleSheet.create({
     color: theme.colors.text,
     fontFamily: theme.fonts.display,
     fontSize: 34
-  },
-  centered: {
-    justifyContent: "center",
-    paddingHorizontal: theme.spacing.lg
   },
   content: {
     gap: theme.spacing.lg,
