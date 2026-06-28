@@ -5,6 +5,7 @@ import { startTransition, useEffect, useRef, useState } from "react";
 import {
   Animated,
   Easing,
+  Image,
   Modal,
   Pressable,
   ScrollView,
@@ -26,6 +27,7 @@ import { theme } from "../theme";
 type EntryDifficulty = "easy" | "medium" | "hard";
 type EntryMode = "classic" | "quake";
 const PREVIEW_TARGET_TOTAL = 21;
+const QUAKE_TILE_IMAGE = require("../../assets/images/quake-tile.png");
 
 // ─── Logo ────────────────────────────────────────────────────────────────────
 
@@ -200,24 +202,24 @@ const quakeHoldingDemo = [
   { label: "6", rank: "6" }
 ];
 
-function getQuakePreviewTileColor(rank: string) {
-  const rankColors: Record<string, string> = {
-    A: "#b88900",
-    "2": "#0047a8",
-    "3": "#9e1414",
-    "4": "#4f1ea8",
-    "5": "#b94f00",
-    "6": "#006f37",
-    "7": "#68111f",
-    "8": "#0c1118",
-    "9": "#c49b00",
-    "10": "#005fc7",
-    J: "#b51d18",
-    Q: "#6028b9",
-    K: "#c76500"
+function getQuakePreviewTileGradient(rank: string): [string, string, string] {
+  const gradients: Record<string, [string, string, string]> = {
+    A: ["rgba(255, 251, 220, 0.98)", "rgba(215, 184, 95, 0.9)", "rgba(111, 91, 43, 0.98)"],
+    "2": ["rgba(237, 248, 255, 0.98)", "rgba(111, 168, 216, 0.9)", "rgba(36, 83, 124, 0.98)"],
+    "3": ["rgba(255, 239, 239, 0.98)", "rgba(216, 115, 115, 0.9)", "rgba(123, 47, 53, 0.98)"],
+    "4": ["rgba(247, 241, 255, 0.98)", "rgba(155, 130, 217, 0.9)", "rgba(73, 58, 130, 0.98)"],
+    "5": ["rgba(255, 244, 232, 0.98)", "rgba(216, 154, 98, 0.9)", "rgba(122, 72, 34, 0.98)"],
+    "6": ["rgba(238, 255, 247, 0.98)", "rgba(111, 191, 154, 0.9)", "rgba(45, 103, 82, 0.98)"],
+    "7": ["rgba(255, 238, 243, 0.98)", "rgba(189, 113, 132, 0.9)", "rgba(103, 48, 68, 0.98)"],
+    "8": ["rgba(244, 248, 252, 0.98)", "rgba(142, 160, 183, 0.9)", "rgba(52, 67, 86, 0.98)"],
+    "9": ["rgba(255, 253, 229, 0.98)", "rgba(210, 189, 114, 0.9)", "rgba(111, 94, 45, 0.98)"],
+    "10": ["rgba(239, 251, 255, 0.98)", "rgba(131, 190, 220, 0.9)", "rgba(45, 96, 128, 0.98)"],
+    J: ["rgba(255, 241, 241, 0.98)", "rgba(215, 134, 134, 0.9)", "rgba(119, 52, 57, 0.98)"],
+    Q: ["rgba(248, 244, 255, 0.98)", "rgba(168, 148, 220, 0.9)", "rgba(79, 65, 132, 0.98)"],
+    K: ["rgba(255, 245, 235, 0.98)", "rgba(217, 163, 110, 0.9)", "rgba(121, 76, 39, 0.98)"]
   };
 
-  return rankColors[rank] ?? "#1f2933";
+  return gradients[rank] ?? ["rgba(244, 250, 255, 0.96)", "rgba(142, 167, 193, 0.86)", "rgba(65, 86, 110, 0.96)"];
 }
 
 export function HomeScreen() {
@@ -365,29 +367,46 @@ export function HomeScreen() {
                     ]}
                   >
                     {tile ? (
-                      <View
+                      <LinearGradient
+                        colors={getQuakePreviewTileGradient(tile.rank)}
+                        end={{ x: 1, y: 1 }}
+                        start={{ x: 0, y: 0 }}
                         style={[
                           styles.quakePreviewTile,
                           {
-                            backgroundColor: getQuakePreviewTileColor(tile.rank),
                             transform: [{ translateY: -Math.min(tile.height * 3, 12) }]
                           }
                         ]}
                       >
                         {Array.from({ length: Math.max(0, tile.height - 1) }, (_, layer) => (
-                          <View
+                          <LinearGradient
+                            colors={getQuakePreviewTileGradient(tile.rank)}
+                            end={{ x: 1, y: 1 }}
                             key={`quake-layer-${cell.key}-${layer}`}
+                            start={{ x: 0, y: 0 }}
                             style={[
                               styles.quakePreviewTileLayer,
                               {
-                                backgroundColor: getQuakePreviewTileColor(tile.rank),
                                 transform: [{ translateY: (layer + 1) * 4 }]
                               }
                             ]}
-                          />
+                          >
+                            <Image
+                              resizeMode="stretch"
+                              source={QUAKE_TILE_IMAGE}
+                              style={styles.quakePreviewTileImage}
+                            />
+                          </LinearGradient>
                         ))}
+                        <Image
+                          resizeMode="stretch"
+                          source={QUAKE_TILE_IMAGE}
+                          style={styles.quakePreviewTileImage}
+                        />
+                        <View pointerEvents="none" style={styles.quakePreviewTileSheen} />
+                        <View pointerEvents="none" style={styles.quakePreviewTileGlow} />
                         <Text style={styles.quakePreviewTileText}>{tile.label}</Text>
-                      </View>
+                      </LinearGradient>
                     ) : null}
                   </View>
                 );
@@ -405,14 +424,21 @@ export function HomeScreen() {
               return (
                 <View key={`quake-hold-${index}`} style={styles.quakePreviewHoldSlot}>
                   {tile ? (
-                    <View
-                      style={[
-                        styles.quakePreviewHoldTile,
-                        { backgroundColor: getQuakePreviewTileColor(tile.rank) }
-                      ]}
+                    <LinearGradient
+                      colors={getQuakePreviewTileGradient(tile.rank)}
+                      end={{ x: 1, y: 1 }}
+                      start={{ x: 0, y: 0 }}
+                      style={styles.quakePreviewHoldTile}
                     >
+                      <Image
+                        resizeMode="stretch"
+                        source={QUAKE_TILE_IMAGE}
+                        style={styles.quakePreviewTileImage}
+                      />
+                      <View pointerEvents="none" style={styles.quakePreviewTileSheen} />
+                      <View pointerEvents="none" style={styles.quakePreviewTileGlow} />
                       <Text style={styles.quakePreviewTileText}>{tile.label}</Text>
-                    </View>
+                    </LinearGradient>
                   ) : null}
                 </View>
               );
@@ -1983,8 +2009,8 @@ const styles = StyleSheet.create({
   },
   quakePreviewHud: {
     alignItems: "center",
-    backgroundColor: "rgba(12, 8, 7, 0.96)",
-    borderColor: "rgba(255, 122, 0, 0.52)",
+    backgroundColor: "rgba(26, 40, 55, 0.96)",
+    borderColor: "rgba(142, 179, 206, 0.62)",
     borderRadius: 16,
     borderWidth: 1.5,
     flexDirection: "row",
@@ -1993,72 +2019,74 @@ const styles = StyleSheet.create({
     paddingVertical: 8
   },
   quakePreviewHudLabel: {
-    color: "rgba(255, 242, 221, 0.78)",
+    color: "#b6ccdc",
     fontFamily: theme.fonts.label,
     fontSize: 9,
     letterSpacing: 1.2,
     textTransform: "uppercase"
   },
   quakePreviewHudValue: {
-    color: "#ffb02e",
+    color: "#eaf6ff",
     fontFamily: theme.fonts.display,
     fontSize: 24,
     lineHeight: 24
   },
   quakePreviewSpawnBadge: {
-    backgroundColor: "rgba(255, 122, 0, 0.14)",
-    borderColor: "rgba(255, 176, 46, 0.46)",
+    backgroundColor: "rgba(111, 168, 216, 0.16)",
+    borderColor: "rgba(142, 179, 206, 0.42)",
     borderRadius: 999,
     borderWidth: 1,
     paddingHorizontal: 10,
     paddingVertical: 5
   },
   quakePreviewSpawnText: {
-    color: "#fff2dd",
+    color: "#eaf6ff",
     fontFamily: theme.fonts.label,
     fontSize: 9,
     letterSpacing: 1,
     textTransform: "uppercase"
   },
   quakePreviewBoard: {
-    backgroundColor: "rgba(15, 15, 16, 0.98)",
-    borderColor: "rgba(255, 122, 0, 0.3)",
-    shadowColor: "#ff3b00",
+    backgroundColor: "rgba(16, 29, 43, 0.94)",
+    borderColor: "rgba(133, 169, 195, 0.32)",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.2,
     shadowRadius: 14
   },
   quakePreviewCell: {
-    backgroundColor: "rgba(28, 26, 24, 0.96)",
-    borderColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(25, 42, 58, 0.86)",
+    borderColor: "rgba(103, 137, 163, 0.54)",
     overflow: "visible"
   },
   quakePreviewCellWave: {
-    borderColor: "rgba(255, 122, 0, 0.48)"
+    borderColor: "rgba(111, 168, 216, 0.62)"
   },
   quakePreviewCellStack: {
-    shadowColor: "#ff7a00",
+    shadowColor: "#6fa8d8",
     shadowOffset: { height: 0, width: 0 },
     shadowOpacity: 0.22,
     shadowRadius: 8
   },
   quakePreviewTile: {
     alignItems: "center",
-    borderColor: "rgba(255, 255, 255, 0.22)",
+    borderColor: "rgba(233, 244, 255, 0.68)",
     borderRadius: 8,
     borderWidth: 1,
     height: "78%",
     justifyContent: "center",
+    overflow: "hidden",
     position: "relative",
     width: "78%"
   },
   quakePreviewTileLayer: {
-    borderColor: "rgba(0, 0, 0, 0.2)",
+    borderColor: "rgba(151, 181, 204, 0.22)",
     borderRadius: 8,
     borderWidth: 1,
     bottom: 0,
     left: 0,
     opacity: 0.76,
+    overflow: "hidden",
     position: "absolute",
     right: 0,
     top: 0
@@ -2073,16 +2101,41 @@ const styles = StyleSheet.create({
     textShadowRadius: 2,
     zIndex: 2
   },
+  quakePreviewTileGlow: {
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    borderRadius: 999,
+    bottom: "18%",
+    left: "18%",
+    position: "absolute",
+    right: "18%",
+    top: "28%"
+  },
+  quakePreviewTileImage: {
+    height: "100%",
+    opacity: 0.16,
+    position: "absolute",
+    width: "100%"
+  },
+  quakePreviewTileSheen: {
+    backgroundColor: "rgba(255, 255, 255, 0.34)",
+    borderRadius: 999,
+    height: "34%",
+    left: "10%",
+    position: "absolute",
+    top: "7%",
+    transform: [{ rotate: "-12deg" }],
+    width: "72%"
+  },
   quakePreviewHolding: {
-    backgroundColor: "rgba(10, 8, 7, 0.9)",
-    borderColor: "rgba(255, 122, 0, 0.34)",
+    backgroundColor: "rgba(16, 29, 43, 0.74)",
+    borderColor: "rgba(133, 169, 195, 0.4)",
     borderRadius: 16,
     borderWidth: 1,
     gap: 7,
     padding: 10
   },
   quakePreviewHoldingTitle: {
-    color: "#fff2dd",
+    color: "#b6ccdc",
     fontFamily: theme.fonts.label,
     fontSize: 10,
     letterSpacing: 1.4,
@@ -2090,7 +2143,7 @@ const styles = StyleSheet.create({
     textTransform: "uppercase"
   },
   quakePreviewHoldingTotal: {
-    color: "#ffb02e",
+    color: "#eaf6ff",
     fontFamily: theme.fonts.display,
     fontSize: 18,
     lineHeight: 18,
@@ -2104,8 +2157,8 @@ const styles = StyleSheet.create({
   quakePreviewHoldSlot: {
     alignItems: "center",
     aspectRatio: 1,
-    backgroundColor: "rgba(0, 0, 0, 0.42)",
-    borderColor: "rgba(255, 176, 46, 0.42)",
+    backgroundColor: "rgba(13, 27, 42, 0.46)",
+    borderColor: "rgba(133, 169, 195, 0.34)",
     borderRadius: 8,
     borderWidth: 1,
     flex: 1,
@@ -2117,18 +2170,19 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     height: "82%",
     justifyContent: "center",
+    overflow: "hidden",
     width: "82%"
   },
   quakePreviewCaption: {
-    color: "rgba(255, 242, 221, 0.72)",
+    color: "rgba(232, 244, 255, 0.72)",
     fontFamily: theme.fonts.body,
     fontSize: 11,
     lineHeight: 15,
     textAlign: "center"
   },
   quakeTutorialModal: {
-    backgroundColor: "#090807",
-    borderColor: "rgba(255, 122, 0, 0.42)"
+    backgroundColor: "#172433",
+    borderColor: "rgba(133, 169, 195, 0.5)"
   },
   sectionHeader: { gap: 2 },
   sectionMeta: {
